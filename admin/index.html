@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پنل مدیریت | اتو سرویس کومه</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    body { font-family: 'Vazirmatn', sans-serif; background-color: #030508; }
+    .glass-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(7, 11, 20, 0.9) 100%);
+        backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+        border: 1px solid rgba(212, 165, 116, 0.18);
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .nav-link.active { color: #f59e0b; background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
+    .view { display: none; }
+    .view.active { display: block; }
+    .spinner-ring { border: 2px solid rgba(245,158,11,0.2); border-left-color: #f59e0b; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.3); border-radius: 10px; }
+    input, select, textarea { color-scheme: dark; }
+    .toast { animation: toast-in 0.3s ease-out; }
+    @keyframes toast-in { from { opacity:0; transform: translateY(10px);} to {opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body class="text-slate-100 antialiased min-h-screen">
+
+<!-- ==================== صفحه ورود ==================== -->
+<div id="view-login" class="view active min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card rounded-3xl p-8 max-w-sm w-full">
+        <div class="flex flex-col items-center mb-6">
+            <div class="w-14 h-14 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30 mb-3">
+                <i data-lucide="wrench" class="w-6 h-6 text-amber-500"></i>
+            </div>
+            <h1 class="text-lg font-black text-white">پنل مدیریت کومه</h1>
+            <p class="text-[10px] text-slate-400 mt-1">ورود مخصوص کارکنان اتوسرویس</p>
+        </div>
+
+        <div id="login-error" class="hidden mb-4 bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl flex items-start gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+            <span id="login-error-text"></span>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="space-y-3.5">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">ایمیل</label>
+                <input id="login-email" type="email" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-3 text-slate-100 focus:border-amber-500 focus:outline-none" placeholder="admin@komeh.ir">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">رمز عبور</label>
+                <input id="login-password" type="password" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-3 text-slate-100 focus:border-amber-500 focus:outline-none" placeholder="••••••••">
+            </div>
+            <button id="btn-login" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-all flex items-center justify-center gap-2">
+                <span>ورود به پنل</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== اپ اصلی (بعد از لاگین) ==================== -->
+<div id="view-app" class="view">
+    <!-- نویگیشن بالا -->
+    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/90 backdrop-blur-md border-b border-white/5 py-3 px-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30">
+                    <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-black text-white">پنل مدیریت کومه</span>
+                    <span id="current-admin-name" class="text-[9px] text-amber-500/70"></span>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="flex items-center gap-1.5 text-slate-400 hover:text-rose-400 text-[10px] font-bold transition-colors">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span>خروج</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto pt-20 px-4 pb-10 flex gap-5">
+        <!-- منوی کناری -->
+        <aside class="w-44 shrink-0 hidden md:block">
+            <div class="glass-card rounded-2xl p-2 space-y-1 sticky top-20">
+                <button onclick="switchView('dashboard')" data-nav="dashboard" class="nav-link active w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> داشبورد
+                </button>
+                <button onclick="switchView('cars')" data-nav="cars" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
+                    <i data-lucide="car" class="w-4 h-4"></i> خودروها و مشتری‌ها
+                </button>
+                <button onclick="switchView('parts')" data-nav="parts" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
+                    <i data-lucide="list-tree" class="w-4 h-4"></i> کاتالوگ قطعات
+                </button>
+                <button onclick="switchView('admins')" data-nav="admins" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
+                    <i data-lucide="users" class="w-4 h-4"></i> کاربران ادمین
+                </button>
+            </div>
+        </aside>
+
+        <!-- نویگیشن موبایل -->
+        <div class="fixed bottom-3 inset-x-3 z-40 md:hidden">
+            <div class="glass-card rounded-2xl p-1.5 flex items-center justify-around">
+                <button onclick="switchView('dashboard')" data-nav-m="dashboard" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-amber-500 rounded-xl">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">داشبورد</span>
+                </button>
+                <button onclick="switchView('cars')" data-nav-m="cars" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
+                    <i data-lucide="car" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">خودروها</span>
+                </button>
+                <button onclick="switchView('parts')" data-nav-m="parts" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
+                    <i data-lucide="list-tree" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">قطعات</span>
+                </button>
+                <button onclick="switchView('admins')" data-nav-m="admins" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
+                    <i data-lucide="users" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">ادمین‌ها</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- محتوای اصلی -->
+        <main class="flex-1 min-w-0 pb-24 md:pb-0">
+
+            <!-- ---------- داشبورد ---------- -->
+            <section id="section-dashboard" class="space-y-5">
+                <h2 class="text-lg font-black text-white">داشبورد کلی</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="glass-card rounded-2xl p-4">
+                        <span class="text-[10px] text-slate-400">تعداد مشتری‌ها</span>
+                        <div id="stat-customers" class="text-xl font-black text-white mt-1">—</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <span class="text-[10px] text-slate-400">تعداد خودروها</span>
+                        <div id="stat-cars" class="text-xl font-black text-white mt-1">—</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <span class="text-[10px] text-slate-400">سرویس این ماه</span>
+                        <div id="stat-services" class="text-xl font-black text-amber-400 mt-1">—</div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4">
+                        <span class="text-[10px] text-slate-400">پیامک ارسالی</span>
+                        <div id="stat-sms" class="text-xl font-black text-white mt-1">—</div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5">
+                    <h3 class="text-xs font-bold text-slate-200 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> آخرین سرویس‌های ثبت‌شده
+                    </h3>
+                    <div id="dashboard-recent-services" class="space-y-2 text-xs text-slate-400">در حال بارگذاری...</div>
+                </div>
+            </section>
+
+            <!-- ---------- خودروها و مشتری‌ها ---------- -->
+            <section id="section-cars" class="space-y-5 hidden">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <h2 class="text-lg font-black text-white">خودروها و مشتری‌ها</h2>
+                    <div class="flex gap-2">
+                        <input id="car-search" oninput="renderCarsList()" type="text" placeholder="جستجو با نام یا شماره موبایل..." class="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2 text-slate-100 focus:border-amber-500 focus:outline-none w-52">
+                        <button onclick="openCustomerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> مشتری جدید
+                        </button>
+                    </div>
+                </div>
+
+                <div id="cars-list-container" class="grid md:grid-cols-2 gap-3"></div>
+            </section>
+
+            <!-- ---------- کاتالوگ قطعات ---------- -->
+            <section id="section-parts" class="space-y-5 hidden">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-black text-white">کاتالوگ قطعات و بازه تعویض</h2>
+                    <button onclick="openPartModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> قطعه جدید
+                    </button>
+                </div>
+                <div id="parts-list-container" class="glass-card rounded-2xl divide-y divide-slate-800/60"></div>
+            </section>
+
+            <!-- ---------- کاربران ادمین ---------- -->
+            <section id="section-admins" class="space-y-5 hidden">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-black text-white">کاربران ادمین</h2>
+                    <button onclick="openAdminModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> ادمین جدید
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500">فقط کاربر با نقش «مالک» می‌تواند ادمین اضافه یا ویرایش کند.</p>
+                <div id="admins-list-container" class="glass-card rounded-2xl divide-y divide-slate-800/60"></div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- ==================== مدال: مشتری + خودرو جدید ==================== -->
+<div id="modal-customer" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-md w-full space-y-4 max-h-[90vh] overflow-y-auto">
+        <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-amber-500"></i> ثبت مشتری و خودرو جدید</h4>
+        <form onsubmit="saveCustomerAndCar(event)" class="space-y-3">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">نام مشتری *</label>
+                <input id="new-customer-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">شماره موبایل *</label>
+                <input id="new-customer-phone" required placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+                <label class="block text-[10px] text-slate-400 mb-1">مدل خودرو *</label>
+                <input id="new-car-model" required placeholder="مثلاً: پژو 207 آی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی *</label>
+                    <input id="new-car-km" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">شماره پلاک</label>
+                    <input id="new-car-plate" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-customer')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
+                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== مدال: جزئیات خودرو + ثبت سرویس ==================== -->
+<div id="modal-car-detail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-lg w-full space-y-4 max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between">
+            <h4 id="car-detail-title" class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="car" class="w-4 h-4 text-amber-500"></i></h4>
+            <button onclick="closeModal('modal-car-detail')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+
+        <div id="car-detail-link-box" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+            <span class="text-[10px] text-slate-400 truncate flex-1" id="car-detail-link"></span>
+            <button onclick="copyCarLink()" class="text-amber-400 text-[10px] font-bold shrink-0 flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> کپی</button>
+        </div>
+        <button onclick="sendCarLinkSms()" id="btn-send-sms" class="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> ارسال لینک پرونده به مشتری (پیامک)
+        </button>
+
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی</label>
+                <input id="edit-car-km" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">سرویس بعدی (KM)</label>
+                <input id="edit-car-next-km" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+        </div>
+        <button onclick="updateCarStats()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-[11px]">به‌روزرسانی کیلومتر</button>
+
+        <div class="border-t border-slate-800 pt-4">
+            <h5 class="text-xs font-bold text-amber-400 mb-3 flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4"></i> ثبت سرویس رسمی جدید</h5>
+            <form onsubmit="saveOfficialService(event)" class="space-y-2.5">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">تاریخ *</label>
+                        <input id="svc-date" required placeholder="1403/05/20" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">کیلومتر سرویس *</label>
+                        <input id="svc-km" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">علت مراجعه</label>
+                    <input id="svc-reason" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">روغن موتور استفاده‌شده</label>
+                    <input id="svc-oil" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">وضعیت گیربکس</label>
+                    <input id="svc-gearbox" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">قطعات/کارهای انجام‌شده (با کاما جدا کن)</label>
+                    <input id="svc-parts" placeholder="Castrol Edge, تعویض ۴ فیلتر" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">جمع‌بندی فنی</label>
+                    <textarea id="svc-summary" rows="2" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-[10px] text-slate-400">
+                    <input id="svc-featured" type="checkbox" checked class="accent-amber-500"> نمایش به عنوان «آخرین سرویس ویژه»
+                </label>
+                <button type="submit" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-xs">ثبت سرویس</button>
+            </form>
+        </div>
+
+        <div class="border-t border-slate-800 pt-4">
+            <h5 class="text-xs font-bold text-slate-300 mb-2">تاریخچه سرویس‌های ثبت‌شده</h5>
+            <div id="car-services-history" class="space-y-2"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== مدال: قطعه کاتالوگ ==================== -->
+<div id="modal-part" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-3">
+        <h4 class="text-sm font-bold text-white">افزودن قطعه به کاتالوگ</h4>
+        <form onsubmit="savePart(event)" class="space-y-3">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">دسته‌بندی *</label>
+                <select id="part-cat" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    <option value="engine">موتور و تعلیق وابسته</option>
+                    <option value="gearbox">گیربکس و انتقال قدرت</option>
+                    <option value="brakes">سیستم ترمز</option>
+                    <option value="suspension">جلوبندی و تعلیق</option>
+                    <option value="hvac">کولر و بخاری</option>
+                    <option value="electric">برق خودرو</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">نام قطعه *</label>
+                <input id="part-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">بازه پیشنهادی تعویض (KM) *</label>
+                <input id="part-interval" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeModal('modal-part')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
+                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== مدال: ادمین جدید ==================== -->
+<div id="modal-admin" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-3">
+        <h4 class="text-sm font-bold text-white">افزودن ادمین جدید</h4>
+        <p class="text-[10px] text-slate-500 leading-relaxed">
+            چون ساخت کاربر جدید نیاز به دسترسی امن سرور دارد، ابتدا کاربر را از
+            Supabase Dashboard → Authentication → Add User بساز، سپس UUID او را اینجا وارد کن تا نقش بگیرد.
+        </p>
+        <form onsubmit="saveAdmin(event)" class="space-y-3">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">UUID کاربر (از Supabase Auth) *</label>
+                <input id="admin-uuid" required placeholder="00000000-0000-0000-0000-000000000000" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">نام کامل *</label>
+                <input id="admin-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">نقش *</label>
+                <select id="admin-role" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    <option value="staff">متصدی (staff)</option>
+                    <option value="manager">مدیر (manager)</option>
+                    <option value="owner">مالک (owner)</option>
+                </select>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeModal('modal-admin')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
+                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed bottom-4 left-4 z-[60] space-y-2"></div>
+
+<script>
+lucide.createIcons();
+
+// ============================================================
+// تنظیمات Supabase — این دو مقدار را بعد از ساخت پروژه جایگزین کن
+// این‌ها کلید عمومی (anon) هستند و امن است که در کد فرانت باشند
+// چون دسترسی واقعی توسط RLS (Row Level Security) کنترل می‌شود
+// ============================================================
+const SUPABASE_URL = "https://ujrsgnrrhxzsgjcuzbrj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqcnNnbnJyaHh6c2dqY3V6YnJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzk4NTQsImV4cCI6MjEwMDcxNTg1NH0.8E6TfofaPCSMjfgK_NjQAZf7-dOyGSvEhwfKCcgvEGc";
+
+// آدرس پایه‌ای که پرونده مشتری روی آن هاست می‌شود (برای ساخت لینک)
+const CUSTOMER_FILE_BASE_URL = "https://komeauto.ir/car"; // اگه دامنه دقیقاً همینه مشکلی نیست، اگه فرق داره بگو عوضش کنم
+
+// آدرس Edge Function ارسال پیامک (بعداً می‌سازیمش)
+const SMS_EDGE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/send-car-link-sms";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentAdmin = null;
+let allCustomers = [];
+let allCars = [];
+let allParts = [];
+let allAdmins = [];
+let activeCarId = null;
+
+function showToast(msg, type = 'success') {
+    const el = document.createElement('div');
+    const color = type === 'success' ? 'border-emerald-500/40 text-emerald-400' : 'border-rose-500/40 text-rose-400';
+    el.className = `toast glass-card ${color} rounded-xl px-4 py-2.5 text-xs font-bold`;
+    el.innerText = msg;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+function closeModal(id) {
+    const m = document.getElementById(id);
+    m.classList.remove('flex');
+    m.classList.add('hidden');
+}
+function openModal(id) {
+    const m = document.getElementById(id);
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+    lucide.createIcons();
+}
+
+// ------------------------------------------------------------
+// احراز هویت
+// ------------------------------------------------------------
+async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-login');
+    const errBox = document.getElementById('login-error');
+    errBox.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-ring"></span>';
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        document.getElementById('login-error-text').innerText = "ایمیل یا رمز عبور اشتباه است.";
+        errBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>ورود به پنل</span>';
+        return;
+    }
+
+    await loadCurrentAdmin();
+}
+
+async function loadCurrentAdmin() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { showLoginView(); return; }
+
+    const { data: profile, error } = await sb.from('admin_profiles').select('*').eq('id', user.id).single();
+
+    if (error || !profile || !profile.is_active) {
+        await sb.auth.signOut();
+        document.getElementById('login-error-text').innerText = "این حساب دسترسی ادمین فعال ندارد.";
+        document.getElementById('login-error').classList.remove('hidden');
+        showLoginView();
+        return;
+    }
+
+    currentAdmin = profile;
+    document.getElementById('current-admin-name').innerText = `${profile.full_name} (${roleLabel(profile.role)})`;
+    showAppView();
+    switchView('dashboard');
+    loadAllData();
+}
+
+function roleLabel(r) {
+    return { owner: 'مالک', manager: 'مدیر', staff: 'متصدی' }[r] || r;
+}
+
+async function handleLogout() {
+    await sb.auth.signOut();
+    location.reload();
+}
+
+function showLoginView() {
+    document.getElementById('view-login').classList.add('active');
+    document.getElementById('view-app').classList.remove('active');
+}
+function showAppView() {
+    document.getElementById('view-login').classList.remove('active');
+    document.getElementById('view-app').classList.add('active');
+}
+
+// ------------------------------------------------------------
+// ناوبری
+// ------------------------------------------------------------
+function switchView(name) {
+    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('section-' + name).classList.remove('hidden');
+    document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
+    document.querySelectorAll('.nav-link-m').forEach(b => {
+        const isActive = b.dataset.navM === name;
+        b.className = 'nav-link-m flex flex-col items-center py-1.5 px-2 rounded-xl ' + (isActive ? 'text-amber-500' : 'text-slate-400');
+    });
+}
+
+// ------------------------------------------------------------
+// بارگذاری داده‌ها
+// ------------------------------------------------------------
+async function loadAllData() {
+    await Promise.all([loadCustomersAndCars(), loadParts(), loadAdmins(), loadDashboardStats()]);
+}
+
+async function loadCustomersAndCars() {
+    const { data: customers } = await sb.from('customers').select('*').order('created_at', { ascending: false });
+    const { data: cars } = await sb.from('cars').select('*').order('created_at', { ascending: false });
+    allCustomers = customers || [];
+    allCars = cars || [];
+    renderCarsList();
+}
+
+function renderCarsList() {
+    const q = (document.getElementById('car-search')?.value || '').trim().toLowerCase();
+    const container = document.getElementById('cars-list-container');
+    if (!container) return;
+
+    const filteredCars = allCars.filter(car => {
+        const cust = allCustomers.find(c => c.id === car.customer_id);
+        if (!q) return true;
+        return (cust?.full_name || '').toLowerCase().includes(q) || (cust?.phone || '').includes(q) || car.model.toLowerCase().includes(q);
+    });
+
+    if (filteredCars.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 col-span-2 text-center py-8">موردی یافت نشد.</div>`;
+        return;
+    }
+
+    container.innerHTML = filteredCars.map(car => {
+        const cust = allCustomers.find(c => c.id === car.customer_id);
+        return `
+        <button onclick="openCarDetail('${car.id}')" class="glass-card rounded-2xl p-4 text-right hover:border-amber-500/40 transition-colors">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black text-white">${car.model}</span>
+                <span class="text-[9px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">${Number(car.current_km).toLocaleString('fa-IR')} KM</span>
+            </div>
+            <div class="text-[10px] text-slate-400 flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3"></i> ${cust?.full_name || '—'}</div>
+            <div class="text-[10px] text-slate-500 flex items-center gap-1.5 mt-1"><i data-lucide="phone" class="w-3 h-3"></i> ${cust?.phone || '—'}</div>
+        </button>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+async function loadParts() {
+    const { data } = await sb.from('parts_catalog').select('*').order('category');
+    allParts = data || [];
+    renderPartsList();
+}
+
+const catLabels = { engine: 'موتور', gearbox: 'گیربکس', brakes: 'ترمز', suspension: 'جلوبندی', hvac: 'کولر/بخاری', electric: 'برق خودرو' };
+
+function renderPartsList() {
+    const container = document.getElementById('parts-list-container');
+    if (!container) return;
+    if (allParts.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">هنوز قطعه‌ای ثبت نشده.</div>`;
+        return;
+    }
+    container.innerHTML = allParts.map(p => `
+        <div class="p-3.5 flex items-center justify-between">
+            <div>
+                <span class="text-xs text-white font-bold">${p.part_name}</span>
+                <span class="text-[9px] text-slate-500 block">${catLabels[p.category] || p.category}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] text-amber-400 font-bold">${Number(p.default_interval_km).toLocaleString('fa-IR')} KM</span>
+                <button onclick="deletePart('${p.id}')" class="text-slate-600 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
+async function loadAdmins() {
+    const { data } = await sb.from('admin_profiles').select('*').order('created_at');
+    allAdmins = data || [];
+    renderAdminsList();
+}
+
+function renderAdminsList() {
+    const container = document.getElementById('admins-list-container');
+    if (!container) return;
+    if (allAdmins.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">هنوز ادمینی ثبت نشده.</div>`;
+        return;
+    }
+    container.innerHTML = allAdmins.map(a => `
+        <div class="p-3.5 flex items-center justify-between">
+            <div>
+                <span class="text-xs text-white font-bold">${a.full_name}</span>
+                <span class="text-[9px] text-slate-500 block">${roleLabel(a.role)}</span>
+            </div>
+            <span class="text-[9px] ${a.is_active ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'} px-2 py-0.5 rounded-full border">${a.is_active ? 'فعال' : 'غیرفعال'}</span>
+        </div>
+    `).join('');
+}
+
+async function loadDashboardStats() {
+    document.getElementById('stat-customers').innerText = allCustomers.length.toLocaleString('fa-IR');
+    document.getElementById('stat-cars').innerText = allCars.length.toLocaleString('fa-IR');
+
+    const { count: smsCount } = await sb.from('sms_logs').select('*', { count: 'exact', head: true });
+    document.getElementById('stat-sms').innerText = (smsCount || 0).toLocaleString('fa-IR');
+
+    const { data: recentServices, count } = await sb.from('official_services')
+        .select('*, cars(model, customer_id)', { count: 'exact' })
+        .order('created_at', { ascending: false }).limit(5);
+
+    document.getElementById('stat-services').innerText = (count || 0).toLocaleString('fa-IR');
+
+    const box = document.getElementById('dashboard-recent-services');
+    if (!recentServices || recentServices.length === 0) {
+        box.innerHTML = 'هنوز سرویسی ثبت نشده.';
+        return;
+    }
+    box.innerHTML = recentServices.map(s => `
+        <div class="flex items-center justify-between border-b border-slate-800/60 pb-2 last:border-0">
+            <span class="text-slate-300">${s.cars?.model || '—'}</span>
+            <span class="text-slate-500">${s.service_date} • ${Number(s.km_at_service).toLocaleString('fa-IR')} KM</span>
+        </div>
+    `).join('');
+}
+
+// ------------------------------------------------------------
+// مشتری و خودرو جدید
+// ------------------------------------------------------------
+function openCustomerModal() {
+    document.getElementById('new-customer-name').value = '';
+    document.getElementById('new-customer-phone').value = '';
+    document.getElementById('new-car-model').value = '';
+    document.getElementById('new-car-km').value = '';
+    document.getElementById('new-car-plate').value = '';
+    openModal('modal-customer');
+}
+
+async function saveCustomerAndCar(e) {
+    e.preventDefault();
+    const name = document.getElementById('new-customer-name').value.trim();
+    const phone = document.getElementById('new-customer-phone').value.trim();
+    const model = document.getElementById('new-car-model').value.trim();
+    const km = parseInt(document.getElementById('new-car-km').value);
+    const plate = document.getElementById('new-car-plate').value.trim();
+
+    const { data: customer, error: custErr } = await sb.from('customers')
+        .insert({ full_name: name, phone, created_by: currentAdmin.id }).select().single();
+
+    if (custErr) { showToast('خطا: ' + custErr.message, 'error'); return; }
+
+    const { error: carErr } = await sb.from('cars')
+        .insert({ customer_id: customer.id, model, current_km: km, plate_number: plate, created_by: currentAdmin.id });
+
+    if (carErr) { showToast('خطا: ' + carErr.message, 'error'); return; }
+
+    showToast('مشتری و خودرو با موفقیت ثبت شد ✓');
+    closeModal('modal-customer');
+    loadCustomersAndCars();
+    loadDashboardStats();
+}
+
+// ------------------------------------------------------------
+// جزئیات خودرو
+// ------------------------------------------------------------
+async function openCarDetail(carId) {
+    activeCarId = carId;
+    const car = allCars.find(c => c.id === carId);
+    const cust = allCustomers.find(c => c.id === car.customer_id);
+
+    document.getElementById('car-detail-title').innerHTML = `<i data-lucide="car" class="w-4 h-4 text-amber-500"></i> ${car.model} — ${cust?.full_name || ''}`;
+    document.getElementById('edit-car-km').value = car.current_km;
+    document.getElementById('edit-car-next-km').value = car.next_service_km || '';
+
+    const link = `${CUSTOMER_FILE_BASE_URL}/${car.access_token}`;
+    document.getElementById('car-detail-link').innerText = link;
+
+    document.getElementById('svc-date').value = '';
+    document.getElementById('svc-km').value = car.current_km;
+    document.getElementById('svc-reason').value = '';
+    document.getElementById('svc-oil').value = '';
+    document.getElementById('svc-gearbox').value = '';
+    document.getElementById('svc-parts').value = '';
+    document.getElementById('svc-summary').value = '';
+
+    openModal('modal-car-detail');
+    loadCarServiceHistory(carId);
+}
+
+function copyCarLink() {
+    const link = document.getElementById('car-detail-link').innerText;
+    navigator.clipboard.writeText(link);
+    showToast('لینک کپی شد ✓');
+}
+
+async function updateCarStats() {
+    const km = parseInt(document.getElementById('edit-car-km').value);
+    const nextKm = parseInt(document.getElementById('edit-car-next-km').value) || null;
+
+    const { error } = await sb.from('cars').update({ current_km: km, next_service_km: nextKm }).eq('id', activeCarId);
+    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
+    showToast('کیلومتر به‌روزرسانی شد ✓');
+    loadCustomersAndCars();
+}
+
+async function saveOfficialService(e) {
+    e.preventDefault();
+    const date = document.getElementById('svc-date').value.trim();
+    const km = parseInt(document.getElementById('svc-km').value);
+    const reason = document.getElementById('svc-reason').value.trim();
+    const oil = document.getElementById('svc-oil').value.trim();
+    const gearbox = document.getElementById('svc-gearbox').value.trim();
+    const partsRaw = document.getElementById('svc-parts').value.trim();
+    const summary = document.getElementById('svc-summary').value.trim();
+    const featured = document.getElementById('svc-featured').checked;
+
+    const partsDone = partsRaw ? partsRaw.split(',').map(p => ({ name: p.trim() })).filter(p => p.name) : [];
+
+    if (featured) {
+        // فقط یک سرویس می‌تواند ویژه باشد؛ بقیه را غیرویژه کن
+        await sb.from('official_services').update({ is_featured: false }).eq('car_id', activeCarId);
+    }
+
+    const { error } = await sb.from('official_services').insert({
+        car_id: activeCarId, service_date: date, km_at_service: km, reason,
+        oil_used: oil, gearbox_note: gearbox, parts_done: partsDone,
+        technical_summary: summary, is_featured: featured, created_by: currentAdmin.id
+    });
+
+    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
+
+    // به‌روزرسانی خودکار کیلومتر فعلی خودرو اگر سرویس جدیدتر بود
+    await sb.from('cars').update({ current_km: km, oil_used: oil }).eq('id', activeCarId).select();
+
+    showToast('سرویس با موفقیت ثبت شد ✓');
+    e.target.reset();
+    document.getElementById('svc-featured').checked = true;
+    loadCarServiceHistory(activeCarId);
+    loadCustomersAndCars();
+    loadDashboardStats();
+}
+
+async function loadCarServiceHistory(carId) {
+    const { data } = await sb.from('official_services').select('*').eq('car_id', carId).order('created_at', { ascending: false });
+    const box = document.getElementById('car-services-history');
+    if (!data || data.length === 0) {
+        box.innerHTML = '<p class="text-[11px] text-slate-500">هنوز سرویسی ثبت نشده.</p>';
+        return;
+    }
+    box.innerHTML = data.map(s => `
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-bold text-white">${s.reason || 'سرویس دوره‌ای'}</span>
+                <span class="text-[9px] text-amber-400">${s.service_date}</span>
+            </div>
+            <span class="text-[10px] text-slate-500">${Number(s.km_at_service).toLocaleString('fa-IR')} KM${s.is_featured ? ' • <span class="text-emerald-400">ویژه</span>' : ''}</span>
+        </div>
+    `).join('');
+}
+
+// ------------------------------------------------------------
+// ارسال پیامک لینک پرونده
+// ------------------------------------------------------------
+async function sendCarLinkSms() {
+    const btn = document.getElementById('btn-send-sms');
+    const car = allCars.find(c => c.id === activeCarId);
+    const cust = allCustomers.find(c => c.id === car.customer_id);
+    const link = `${CUSTOMER_FILE_BASE_URL}/${car.access_token}`;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-ring"></span>';
+
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch(SMS_EDGE_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ phone: cust.phone, carId: car.id, link, customerName: cust.full_name })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'خطای ارسال پیامک');
+        showToast('پیامک با موفقیت ارسال شد ✓');
+    } catch (err) {
+        showToast('خطا در ارسال پیامک: ' + err.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="send" class="w-3.5 h-3.5"></i> ارسال لینک پرونده به مشتری (پیامک)';
+    lucide.createIcons();
+}
+
+// ------------------------------------------------------------
+// کاتالوگ قطعات
+// ------------------------------------------------------------
+function openPartModal() {
+    document.getElementById('part-name').value = '';
+    document.getElementById('part-interval').value = '';
+    openModal('modal-part');
+}
+
+async function savePart(e) {
+    e.preventDefault();
+    const category = document.getElementById('part-cat').value;
+    const part_name = document.getElementById('part-name').value.trim();
+    const default_interval_km = parseInt(document.getElementById('part-interval').value);
+
+    const { error } = await sb.from('parts_catalog').insert({ category, part_name, default_interval_km });
+    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
+
+    showToast('قطعه اضافه شد ✓');
+    closeModal('modal-part');
+    loadParts();
+}
+
+async function deletePart(id) {
+    if (!confirm('حذف این قطعه از کاتالوگ؟')) return;
+    const { error } = await sb.from('parts_catalog').delete().eq('id', id);
+    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
+    showToast('قطعه حذف شد');
+    loadParts();
+}
+
+// ------------------------------------------------------------
+// کاربران ادمین
+// ------------------------------------------------------------
+function openAdminModal() {
+    if (currentAdmin.role !== 'owner') { showToast('فقط مالک می‌تواند ادمین اضافه کند.', 'error'); return; }
+    document.getElementById('admin-uuid').value = '';
+    document.getElementById('admin-name').value = '';
+    openModal('modal-admin');
+}
+
+async function saveAdmin(e) {
+    e.preventDefault();
+    const id = document.getElementById('admin-uuid').value.trim();
+    const full_name = document.getElementById('admin-name').value.trim();
+    const role = document.getElementById('admin-role').value;
+
+    const { error } = await sb.from('admin_profiles').insert({ id, full_name, role });
+    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
+
+    showToast('ادمین جدید اضافه شد ✓');
+    closeModal('modal-admin');
+    loadAdmins();
+}
+
+// ------------------------------------------------------------
+// شروع برنامه
+// ------------------------------------------------------------
+(async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        await loadCurrentAdmin();
+    } else {
+        showLoginView();
+    }
+})();
+</script>
+</body>
+</html>
