@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اتو سرویس کومه | پرونده هوشمند خودرو</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #030508;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(7, 11, 20, 0.9) 100%);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(212, 165, 116, 0.18);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(212, 165, 116, 0.4);
+            box-shadow: 0 30px 70px rgba(212, 165, 116, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 12px rgba(245, 158, 11, 0.6); }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 24px rgba(245, 158, 11, 0.9); }
+        }
+        .glow-dot-amber { animation: pulse-glow 2.5s infinite; }
+        @keyframes pulse-glow-green {
+            0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 24px rgba(16, 185, 129, 0.9); }
+        }
+        .glow-dot-emerald { animation: pulse-glow-green 2s infinite; }
+        .tab-content { display: none; opacity: 0; transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; opacity: 1; }
+        .timeline-line { background: linear-gradient(180deg, rgba(245, 158, 11, 0.5) 0%, rgba(245, 158, 11, 0.1) 85%, transparent 100%); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; opacity: 0; }
+        .accordion-content.open { max-height: 350px; opacity: 1; }
+        .spinner-ring { border: 2px solid rgba(139, 92, 246, 0.2); border-left-color: #8b5cf6; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%); background-size: 400% 100%; animation: skeleton-loading 1.4s ease infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+    </style>
+</head>
+<body class="text-slate-100 antialiased selection:bg-amber-500/30 pb-28">
+
+    <!-- منوی بالایی -->
+    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/85 backdrop-blur-md border-b border-white/5 py-3.5 px-6">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30 shadow-inner">
+                    <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-black tracking-wider text-white">اتو سرویس کومه</span>
+                    <span class="text-[8px] text-amber-500/70 tracking-widest font-bold">SMART CAR CARE</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- تصویر پس‌زمینه -->
+    <div class="fixed inset-0 w-full h-full z-10 pointer-events-none overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-[#030508]/90 via-[#030508]/35 to-[#030508]/95 z-20"></div>
+        <img id="hero-bg-image"
+             src="https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=1200&q=80"
+             alt="خودرو"
+             class="w-full h-full object-cover opacity-45">
+    </div>
+
+    <!-- ==================== حالت بارگذاری ==================== -->
+    <div id="loading-state" class="relative z-20 w-full max-w-md mx-auto px-4 pt-24 min-h-screen flex flex-col items-center justify-center gap-3">
+        <div class="spinner-ring !w-8 !h-8 !border-[3px]"></div>
+        <p class="text-xs text-slate-400">در حال بارگذاری پرونده خودرو...</p>
+    </div>
+
+    <!-- ==================== حالت خطا (لینک نامعتبر) ==================== -->
+    <div id="error-state" class="relative z-20 w-full max-w-md mx-auto px-4 pt-24 min-h-screen hidden flex-col items-center justify-center text-center gap-3">
+        <i data-lucide="link-2-off" class="w-10 h-10 text-rose-500/70"></i>
+        <h2 class="text-sm font-bold text-white">پرونده‌ای یافت نشد</h2>
+        <p class="text-xs text-slate-400 max-w-xs">لینکی که استفاده کردید معتبر نیست یا منقضی شده. لطفاً با اتو سرویس کومه تماس بگیرید.</p>
+        <a href="tel:09123456789" class="mt-3 bg-amber-500 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl">تماس با ما</a>
+    </div>
+
+    <!-- ==================== صفحه اصلی (پرونده هوشمند) ==================== -->
+    <div id="tab-main" class="tab-content relative z-20 w-full max-w-md mx-auto px-4 pt-20 hidden">
+
+        <section id="scene-intro" class="min-h-[70vh] flex flex-col justify-center items-center text-center py-10">
+            <span class="text-[10px] uppercase tracking-widest text-amber-500/80 font-bold mb-3 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                سامانه هوشمند و پرونده سلامت خودرو
+            </span>
+            <h2 class="text-3xl font-black text-white leading-tight mb-4">
+                اتو سرویس کومه<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200 text-xl font-bold">اصالت در خدمات، هوشمندی در مدیریت</span>
+            </h2>
+            <p class="text-xs text-slate-400 max-w-xs leading-relaxed mb-10">
+                سوابق سرویس‌های دوره‌ای، سلامت قطعات و دفترچه نگهداری خودروی شما در یکجا.
+            </p>
+            <div class="flex flex-col items-center gap-2 animate-bounce">
+                <span class="text-[10px] text-slate-500">مشاهده پرونده (اسکرول کنید)</span>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-amber-500/60"></i>
+            </div>
+        </section>
+
+        <!-- بخش اول: اطلاعات و مسافت‌شمار -->
+        <section class="min-h-[60vh] flex flex-col justify-center py-10">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-amber-500/80 font-bold tracking-widest uppercase">بخش اول</span>
+                <h3 class="text-lg font-black text-white">پرونده هویت و کیلومتر</h3>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28">
+                    <span class="text-[9px] text-slate-400 font-medium">خودرو</span>
+                    <div>
+                        <span id="car-model" class="text-xs font-black text-white block truncate">—</span>
+                    </div>
+                </div>
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-medium">کیلومتر فعلی</span>
+                        <i data-lucide="gauge" class="w-3.5 h-3.5 text-amber-500/70"></i>
+                    </div>
+                    <div><span id="current-km" class="text-sm font-black text-white">—</span><span class="text-[9px] text-slate-400 mr-0.5">KM</span></div>
+                </div>
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-medium">سرویس بعدی</span>
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-500/70"></i>
+                    </div>
+                    <div><span id="next-service-km" class="text-sm font-black text-amber-500">—</span><span class="text-[9px] text-amber-500/80 mr-0.5">KM</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- بخش دوم: تحلیل هوش مصنوعی -->
+        <section class="min-h-screen flex flex-col justify-center py-12">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-violet-400 font-bold tracking-widest uppercase">بخش دوم</span>
+                <h3 class="text-lg font-black text-white">تحلیل سلامت هوشمند</h3>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 mb-4">
+                <div class="flex items-center justify-between bg-slate-950/40 border border-slate-800 p-3.5 rounded-xl mb-4">
+                    <span class="text-xs font-medium text-slate-300">وضعیت عمومی خودرو:</span>
+                    <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 glow-dot-emerald"></span>
+                        <span id="car-status-text" class="text-[10px] font-bold text-emerald-400">—</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">سلامت تخمینی روغن موتور</span>
+                        <span id="oil-efficiency-percent" class="font-bold text-amber-500">—</span>
+                    </div>
+                    <div class="w-full bg-slate-950/80 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="oil-efficiency-bar" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <button id="btn-generate-ai" onclick="generateAIReport()" class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.01] active:scale-95">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>تحلیل وضعیت خودرو با هوش مصنوعی سرور</span>
+                </button>
+
+                <div id="ai-report-box" class="mt-4 bg-slate-950/60 border border-violet-500/20 rounded-xl p-4 hidden">
+                    <div class="flex items-center gap-2 mb-2 text-violet-400 font-bold text-xs">
+                        <i data-lucide="brain-circuit" class="w-4.5 h-4.5"></i>
+                        گزارش تخصصی هوش مصنوعی کومه
+                    </div>
+                    <p id="ai-report-text" class="text-xs text-slate-300 leading-relaxed text-justify whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-violet-500/10">
+                <h4 class="text-xs text-slate-400 font-bold mb-3 flex items-center gap-1.5 border-b border-slate-800 pb-3">
+                    <i data-lucide="message-square" class="w-4 h-4 text-violet-400"></i>
+                    دستیار عیب‌یاب هوشمند (اوستا کومه)
+                </h4>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                    <button onclick="quickAsk('علت صدای تق تق زیر پا موقع ترمز چیه؟')" class="bg-slate-950/80 border border-slate-800 text-[9px] text-slate-300 px-2.5 py-1.5 rounded-lg hover:border-violet-500/50 transition-colors">صدای تق تق ترمز</button>
+                    <button onclick="quickAsk('چرا موتور ماشین لرزش عجیبی توی سلو داره؟')" class="bg-slate-950/80 border border-slate-800 text-[9px] text-slate-300 px-2.5 py-1.5 rounded-lg hover:border-violet-500/50 transition-colors">لرزش موتور</button>
+                </div>
+
+                <div class="flex gap-2">
+                    <input id="ai-chat-input" type="text" placeholder="مشکل خودرو را بنویسید..." class="flex-1 bg-slate-950/90 border border-slate-800 text-xs rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500">
+                    <button id="btn-ask-ai" onclick="askAIOvesta()" class="bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 rounded-xl text-xs transition-colors active:scale-95">بپرس ✨</button>
+                </div>
+
+                <div id="ai-chat-response-box" class="mt-4 bg-slate-950/60 border border-slate-800 rounded-xl p-4 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-violet-400 font-bold flex items-center gap-1.5"><i data-lucide="user-cog" class="w-4 h-4"></i>پاسخ اوستا کومه:</span>
+                        <button onclick="clearChat()" class="text-[9px] text-slate-500 hover:text-slate-300 flex items-center gap-0.5"><i data-lucide="refresh-cw" class="w-3 h-3"></i> پاک کردن</button>
+                    </div>
+                    <p id="ai-chat-response" class="text-xs text-slate-300 leading-relaxed text-justify whitespace-pre-line"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- بخش سوم: سوابق رسمی -->
+        <section class="min-h-screen flex flex-col justify-center py-12">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full mb-2">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span class="text-[9px] font-black text-amber-400 uppercase tracking-widest">تایید شده توسط مدیریت</span>
+                </div>
+                <h3 class="text-xl font-black text-white tracking-tight">سوابق رسمی اتوسرویس کومه</h3>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                    تایم‌لاین پرونده رسمی خدمات و سرویس‌های دوره‌ای ثبت شده در مجموعه
+                </p>
+            </div>
+
+            <div id="featured-service-container" class="mb-8"></div>
+            <div class="relative pl-0 pr-6 mr-1">
+                <div class="absolute top-2 right-2.5 bottom-6 w-0.5 timeline-line rounded-full"></div>
+                <div id="timeline-cards-container" class="space-y-6"></div>
+            </div>
+
+            <footer class="text-center mt-12"><p class="text-[9px] text-slate-600">پلتفرم مدیریت یکپارچه و هوشمند کومه</p></footer>
+        </section>
+    </div>
+
+    <!-- ==================== صفحه مجزای دفترچه شخصی ==================== -->
+    <div id="tab-notebook" class="tab-content relative z-20 w-full max-w-md mx-auto px-4 pt-20 hidden">
+        <section class="py-6">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-amber-500/80 font-bold tracking-widest uppercase bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                    صفحه اختصاصی مالک خودرو
+                </span>
+                <h3 class="text-xl font-black text-white flex items-center justify-center gap-2 mt-3">
+                    <i data-lucide="book-open" class="w-5 h-5 text-amber-500"></i>
+                    دفترچه شخصی نگهداری خودرو
+                </h3>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto">
+                    اطلاعات این صفحه فقط برای شماست و جزو سوابق رسمی اتوسرویس کومه نیست.
+                </p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 mb-5 border-amber-500/30">
+                <h4 class="text-xs font-bold text-amber-400 mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-2.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    ثبت سرویس / قطعه جدید
+                </h4>
+
+                <div id="personal-error-msg" class="hidden mb-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <span id="personal-error-text"></span>
+                </div>
+
+                <form id="personal-service-form" onsubmit="savePersonalService(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">نوع قطعه یا سرویس *</label>
+                        <select id="part-category-select" onchange="updatePartOptions()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 mb-2 focus:border-amber-500 focus:outline-none">
+                            <option value="">-- انتخاب دسته‌بندی --</option>
+                            <option value="engine">🔧 موتور و تعلیق وابسته</option>
+                            <option value="gearbox">⚙️ گیربکس و انتقال قدرت</option>
+                            <option value="brakes">🛑 سیستم ترمز</option>
+                            <option value="suspension">🚘 جلوبندی و تعلیق</option>
+                            <option value="hvac">❄️ کولر و بخاری</option>
+                            <option value="electric">⚡ برق خودرو</option>
+                            <option value="custom">📝 مورد سفارشی دیگر...</option>
+                        </select>
+                        <select id="part-name-select" onchange="onPartSelected()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none hidden"></select>
+                        <input id="custom-part-input" type="text" placeholder="نام قطعه یا تعمیر سفارشی را بنویسید..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 mt-2 focus:border-amber-500 focus:outline-none hidden">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">تاریخ *</label>
+                            <input id="personal-date" type="text" placeholder="1403/05/20" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی *</label>
+                            <input id="personal-km" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-500/5 p-3 rounded-xl border border-amber-500/20">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                                کیلومتر تعویض بعدی (اجباری) *
+                            </label>
+                            <span id="recommended-interval" class="text-[9px] text-slate-400"></span>
+                        </div>
+                        <input id="personal-next-km" type="number" required placeholder="مثلاً: ۱۹۴۰۰۰" class="w-full bg-slate-950 border border-amber-500/40 text-xs rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none placeholder-slate-600 font-bold">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">وضعیت قطعه *</label>
+                            <select id="personal-status" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                                <option value="🟢 تعویض شد">🟢 تعویض شد</option>
+                                <option value="🟡 نیاز به تعویض در آینده">🟡 نیاز به تعویض در آینده</option>
+                                <option value="🟢 سالم و بازبینی شده">🟢 سالم و بازبینی شده</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">هزینه (تومان - اختیاری)</label>
+                            <input id="personal-cost" type="number" placeholder="مثلاً: 2500000" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">توضیحات (اختیاری)</label>
+                        <input id="personal-notes" type="text" placeholder="مثلاً: برند عظام - خریده شده از لوازم یدکی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    </div>
+
+                    <button id="btn-save-personal" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        ثبت در دفترچه شخصی
+                    </button>
+                </form>
+            </div>
+
+            <div class="glass-card rounded-2xl p-4 overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <i data-lucide="history" class="w-4 h-4 text-amber-500"></i>
+                        تاریخچه ثبت شده توسط شما
+                    </h4>
+                    <span id="personal-count-badge" class="text-[9px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">۰ مورد</span>
+                </div>
+                <div id="personal-history-container" class="space-y-2.5"></div>
+            </div>
+
+            <footer class="text-center mt-10"><p class="text-[9px] text-slate-600">دفترچه نگهداری شخصی خودرو - کومه</p></footer>
+        </section>
+    </div>
+
+    <!-- نوار ابزار متحرک و شناور پایین صفحه -->
+    <div id="bottom-nav" class="fixed bottom-4 inset-x-3 z-40 max-w-md mx-auto hidden">
+        <div class="glass-card rounded-2xl p-2 border-amber-500/30 flex items-center justify-between shadow-2xl backdrop-blur-xl bg-[#0a0e17]/95">
+            <button id="nav-btn-main" onclick="switchTab('main')" class="flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors">
+                <i data-lucide="home" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">اصلی</span>
+            </button>
+            <button id="nav-btn-notebook" onclick="switchTab('notebook')" class="flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors relative">
+                <i data-lucide="book-open" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">دفترچه شخصی</span>
+            </button>
+            <button onclick="openModal('booking-modal')" class="bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition-transform mx-1">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                <span class="text-[11px]">رزرو نوبت</span>
+            </button>
+            <a href="tel:09123456789" class="flex flex-col items-center justify-center py-1.5 px-2 text-slate-400 hover:text-amber-400 transition-colors">
+                <i data-lucide="phone-call" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">تماس</span>
+            </a>
+            <a href="#" target="_blank" class="flex flex-col items-center justify-center py-1.5 px-2 text-slate-400 hover:text-amber-400 transition-colors">
+                <i data-lucide="map-pin" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">مسیریابی</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- مدال رزرو نوبت -->
+    <div id="booking-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full text-center space-y-4">
+            <h4 class="text-sm font-bold text-white">زمان‌بندی آنلاین نوبت</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">برای ثبت نوبت سرویس بعدی خودروی خود، می‌توانید از طریق فرم زیر زمان مورد نظر را رزرو کنید.</p>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal('booking-modal')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs hover:bg-slate-700 transition-colors">انصراف</button>
+                <a href="tel:09123456789" onclick="closeModal('booking-modal')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center hover:bg-amber-400 transition-colors">تماس برای رزرو</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // ============================================================
+        // این فایل دیگر هیچ کلید API را در خودش ندارد.
+        // همه‌چیز از طریق Supabase Edge Functionها با ارائه فقط "توکن خودرو" انجام می‌شود.
+        // ============================================================
+        const SMS_FUNCTIONS_BASE = "https://ujrsgnrrhxzsgjcuzbrj.supabase.co/functions/v1";
+        const GET_CAR_DATA_URL = SMS_FUNCTIONS_BASE + "/get-car-data";
+        const SAVE_PERSONAL_LOG_URL = SMS_FUNCTIONS_BASE + "/save-personal-log";
+        const AI_ASSISTANT_URL = SMS_FUNCTIONS_BASE + "/ai-assistant";
+
+        // توکن خودرو از URL خوانده می‌شود، مثلاً: komeh.ir/car.html?t=xxxxxxxx
+        // یا اگر روتینگ سرور دارید: komeh.ir/car/xxxxxxxx
+        function getCarToken() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('t')) return params.get('t');
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            return pathParts[pathParts.length - 1] || null;
+        }
+
+        const CAR_TOKEN = getCarToken();
+        let carData = null;
+        let partsCatalog = [];
+        let personalLogs = [];
+
+        const catLabels = { engine: '🔧 موتور و تعلیق وابسته', gearbox: '⚙️ گیربکس و انتقال قدرت', brakes: '🛑 سیستم ترمز', suspension: '🚘 جلوبندی و تعلیق', hvac: '❄️ کولر و بخاری', electric: '⚡ برق خودرو' };
+        const FORBIDDEN_KEYWORDS = ["روغن موتور", "فیلتر روغن", "فیلتر هوا", "فیلتر کابین", "فیلتر بنزین"];
+
+        async function loadCarData() {
+            if (!CAR_TOKEN) { showErrorState(); return; }
+            try {
+                const res = await fetch(GET_CAR_DATA_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: CAR_TOKEN })
+                });
+                if (!res.ok) throw new Error('not found');
+                const data = await res.json();
+
+                carData = data.car;
+                partsCatalog = data.partsCatalog || [];
+                personalLogs = data.personalLogs || [];
+
+                renderCarInfo(data.car);
+                renderOfficialServices(data.services || []);
+                renderPersonalHistory();
+
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('tab-main').classList.remove('hidden');
+                document.getElementById('tab-main').classList.add('active');
+                document.getElementById('bottom-nav').classList.remove('hidden');
+                lucide.createIcons();
+            } catch (err) {
+                showErrorState();
+            }
+        }
+
+        function showErrorState() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+            document.getElementById('error-state').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function renderCarInfo(car) {
+            document.getElementById('car-model').innerText = car.model;
+            document.getElementById('current-km').innerText = Number(car.current_km).toLocaleString('fa-IR');
+            document.getElementById('next-service-km').innerText = car.next_service_km ? Number(car.next_service_km).toLocaleString('fa-IR') : '—';
+            document.getElementById('car-status-text').innerText = car.status_text || 'در وضعیت خوب';
+            document.getElementById('oil-efficiency-percent').innerText = (car.oil_health_percent ?? 0) + '٪ سلامت';
+            document.getElementById('oil-efficiency-bar').style.width = (car.oil_health_percent ?? 0) + '%';
+            if (car.hero_image_url) document.getElementById('hero-bg-image').src = car.hero_image_url;
+        }
+
+        function renderOfficialServices(services) {
+            const featured = services.find(s => s.is_featured);
+            const rest = services.filter(s => !s.is_featured);
+
+            const featuredBox = document.getElementById('featured-service-container');
+            if (featured) {
+                const filtersHtml = (featured.filters || []).map(f => `
+                    <div class="bg-slate-900/90 border border-emerald-500/30 p-2 rounded-xl flex items-center justify-between">
+                        <span class="text-[10px] text-slate-300">${f.name}</span>
+                        <span class="text-[9px] font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> ${f.status || 'تعویض شد'}</span>
+                    </div>`).join('');
+
+                featuredBox.innerHTML = `
+                <div class="glass-card rounded-3xl p-5 border-amber-500/30 relative overflow-hidden shadow-2xl">
+                    <div class="absolute top-0 left-0 w-28 h-28 bg-amber-500/10 rounded-full filter blur-2xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 glow-dot-emerald"></span>
+                            <span class="text-xs font-black text-white">آخرین سرویس ثبت‌شده</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i> ${featured.service_date}
+                        </span>
+                    </div>
+                    <div class="space-y-3">
+                        ${featured.oil_used ? `
+                        <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800/60">
+                            <div class="flex items-center gap-2 text-slate-300 text-xs"><i data-lucide="droplet" class="w-4 h-4 text-amber-500"></i><span>روغن موتور:</span></div>
+                            <span class="text-xs font-black text-white">${featured.oil_used}</span>
+                        </div>` : ''}
+                        ${filtersHtml ? `
+                        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span class="text-[10px] text-slate-400 font-bold block mb-1">وضعیت دقیق فیلترها و مصرفی‌ها:</span>
+                            <div class="grid grid-cols-2 gap-2">${filtersHtml}</div>
+                        </div>` : ''}
+                        ${featured.gearbox_note ? `
+                        <div class="flex items-center justify-between text-xs px-1 pt-1">
+                            <span class="text-slate-400 text-[11px]">گیربکس / واسکازین:</span>
+                            <span class="font-bold text-slate-200">${featured.gearbox_note}</span>
+                        </div>` : ''}
+                        ${featured.reason ? `
+                        <div class="flex items-center justify-between text-xs px-1">
+                            <span class="text-slate-400 text-[11px]">علت مراجعه:</span>
+                            <span class="font-bold text-white">${featured.reason}</span>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            } else {
+                featuredBox.innerHTML = '';
+            }
+
+            const container = document.getElementById('timeline-cards-container');
+            if (rest.length === 0) {
+                container.innerHTML = `<p class="text-center text-[11px] text-slate-500 py-6">هنوز سابقه‌ای غیر از سرویس اخیر ثبت نشده.</p>`;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = rest.map((s, idx) => {
+                const partsHtml = (s.parts_done || []).map(p => `
+                    <span class="bg-slate-900 border border-slate-800 text-slate-200 text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1">
+                        <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> ${p.name}
+                    </span>`).join('');
+                const accId = 'acc-' + s.id;
+                return `
+                <div class="relative timeline-item">
+                    <div class="absolute -right-6 top-3 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 mr-2 border-slate-800">
+                        <div class="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2.5">
+                            <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1">
+                                <i data-lucide="wrench" class="w-3 h-3"></i> ${s.reason || 'سرویس دوره‌ای'}
+                            </span>
+                            <span class="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3 h-3 text-amber-500"></i> ${s.service_date}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between my-2 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/60">
+                            <span class="text-[10px] text-slate-400">کارکرد خودرو:</span>
+                            <span class="text-xs font-black text-white tracking-wider bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700">${Number(s.km_at_service).toLocaleString('fa-IR')} KM</span>
+                        </div>
+                        ${partsHtml ? `<div class="flex flex-wrap gap-1.5 my-3">${partsHtml}</div>` : ''}
+                        ${s.technical_summary ? `
+                        <div class="mt-2 pt-2 border-t border-slate-800/60">
+                            <button onclick="toggleAccordion('${accId}')" class="text-[10px] text-amber-400 font-bold flex items-center gap-1 hover:text-amber-300 transition-colors">
+                                <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                <span>مشاهده توضیحات و جمع‌بندی فنی</span>
+                                <i data-lucide="chevron-down" id="acc-icon-${accId}" class="w-3 h-3 transition-transform duration-300"></i>
+                            </button>
+                            <div id="${accId}" class="accordion-content mt-2 text-[11px] text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800/80 leading-relaxed">
+                                ${s.technical_summary}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('acc-icon-' + id);
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const btnMain = document.getElementById('nav-btn-main');
+            const btnNotebook = document.getElementById('nav-btn-notebook');
+            if (tabName === 'main') {
+                document.getElementById('tab-main').classList.add('active');
+                btnMain.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors";
+                btnNotebook.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors relative";
+            } else {
+                document.getElementById('tab-notebook').classList.add('active');
+                btnNotebook.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors relative";
+                btnMain.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        // ------------------------------------------------------------
+        // هوش مصنوعی (از طریق Edge Function - بدون کلید در فرانت)
+        // ------------------------------------------------------------
+        async function callAI(mode, question) {
+            const res = await fetch(AI_ASSISTANT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: CAR_TOKEN, mode, question })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'خطای ناشناخته');
+            return data.result;
+        }
+
+        async function generateAIReport() {
+            const reportBox = document.getElementById("ai-report-box");
+            const reportText = document.getElementById("ai-report-text");
+            const btn = document.getElementById("btn-generate-ai");
+            reportBox.classList.remove("hidden");
+            reportText.innerHTML = `<div class="flex items-center gap-2 text-violet-400"><div class="spinner-ring"></div><span>در حال بررسی و تحلیل هوشمند وضعیت خودرو...</span></div>`;
+            btn.disabled = true;
+            try {
+                const result = await callAI('report');
+                reportText.innerText = result;
+            } catch (err) {
+                reportText.innerText = err.message;
+            }
+            btn.disabled = false;
+        }
+
+        async function askAIOvesta() {
+            const inputField = document.getElementById("ai-chat-input");
+            const responseBox = document.getElementById("ai-chat-response-box");
+            const responseText = document.getElementById("ai-chat-response");
+            const question = inputField.value.trim();
+            if (!question) return;
+            responseBox.classList.remove("hidden");
+            responseText.innerHTML = `<div class="flex items-center gap-2 text-violet-400"><div class="spinner-ring"></div><span>اوستا کومه داره روی سوالت فکر می‌کنه... 🛠️</span></div>`;
+            try {
+                const result = await callAI('chat', question);
+                responseText.innerText = result;
+            } catch (err) {
+                responseText.innerText = err.message;
+            }
+            inputField.value = "";
+        }
+
+        function quickAsk(q) {
+            document.getElementById("ai-chat-input").value = q;
+            askAIOvesta();
+        }
+        function clearChat() {
+            document.getElementById("ai-chat-response-box").classList.add("hidden");
+        }
+
+        // ------------------------------------------------------------
+        // دفترچه شخصی
+        // ------------------------------------------------------------
+        function updatePartOptions() {
+            const category = document.getElementById('part-category-select').value;
+            const nameSelect = document.getElementById('part-name-select');
+            const customInput = document.getElementById('custom-part-input');
+            const intervalHint = document.getElementById('recommended-interval');
+
+            nameSelect.innerHTML = '';
+            customInput.classList.add('hidden');
+            nameSelect.classList.add('hidden');
+            intervalHint.innerText = '';
+
+            if (!category) return;
+
+            if (category === 'custom') {
+                customInput.classList.remove('hidden');
+                return;
+            }
+
+            const options = partsCatalog.filter(p => p.category === category);
+            nameSelect.innerHTML = '<option value="">-- انتخاب قطعه --</option>' +
+                options.map(p => `<option value="${p.part_name}" data-interval="${p.default_interval_km}">${p.part_name}</option>`).join('');
+            nameSelect.classList.remove('hidden');
+        }
+
+        function onPartSelected() {
+            const nameSelect = document.getElementById('part-name-select');
+            const selected = nameSelect.selectedOptions[0];
+            const intervalHint = document.getElementById('recommended-interval');
+            const nextKmInput = document.getElementById('personal-next-km');
+            const kmInput = document.getElementById('personal-km');
+
+            if (selected && selected.dataset.interval) {
+                const interval = parseInt(selected.dataset.interval);
+                intervalHint.innerText = `کارکرد پیشنهادی: ${interval.toLocaleString('fa-IR')} KM`;
+                const currentKm = parseInt(kmInput.value) || (carData ? carData.current_km : 0);
+                if (currentKm) nextKmInput.placeholder = String(currentKm + interval);
+            } else {
+                intervalHint.innerText = '';
+            }
+        }
+
+        async function savePersonalService(e) {
+            e.preventDefault();
+            const errBox = document.getElementById('personal-error-msg');
+            const errText = document.getElementById('personal-error-text');
+            errBox.classList.add('hidden');
+
+            const category = document.getElementById('part-category-select').value;
+            let partName = '';
+            if (category === 'custom') {
+                partName = document.getElementById('custom-part-input').value.trim();
+            } else {
+                partName = document.getElementById('part-name-select').value;
+            }
+
+            if (!partName) {
+                errText.innerText = 'لطفاً نوع قطعه یا سرویس را مشخص کنید.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const isForbidden = FORBIDDEN_KEYWORDS.some(kw => partName.includes(kw));
+            if (isForbidden) {
+                errText.innerText = 'ثبت تعویض روغن و فیلترها فقط توسط اتوسرویس کومه انجام می‌شود و در این بخش قابل ثبت نیست.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const payload = {
+                token: CAR_TOKEN,
+                part_category: category === 'custom' ? null : category,
+                part_name: partName,
+                log_date: document.getElementById('personal-date').value.trim(),
+                km_at_log: document.getElementById('personal-km').value,
+                next_km: document.getElementById('personal-next-km').value,
+                status: document.getElementById('personal-status').value,
+                cost: document.getElementById('personal-cost').value || null,
+                notes: document.getElementById('personal-notes').value.trim() || null
+            };
+
+            const btn = document.getElementById('btn-save-personal');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(SAVE_PERSONAL_LOG_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'خطا در ثبت اطلاعات');
+
+                personalLogs.unshift(data.log);
+                renderPersonalHistory();
+                document.getElementById('personal-service-form').reset();
+                updatePartOptions();
+            } catch (err) {
+                errText.innerText = err.message;
+                errBox.classList.remove('hidden');
+            }
+            btn.disabled = false;
+        }
+
+        function renderPersonalHistory() {
+            const container = document.getElementById('personal-history-container');
+            document.getElementById('personal-count-badge').innerText = `${personalLogs.length.toLocaleString('fa-IR')} مورد`;
+
+            if (personalLogs.length === 0) {
+                container.innerHTML = `<p class="text-center text-[11px] text-slate-500 py-6">هنوز موردی ثبت نکرده‌اید.</p>`;
+                return;
+            }
+
+            container.innerHTML = personalLogs.map(log => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-bold text-white">${log.part_name}</span>
+                        <span class="text-[9px] text-slate-500">${log.log_date}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>${Number(log.km_at_log).toLocaleString('fa-IR')} KM → بعدی: ${Number(log.next_km).toLocaleString('fa-IR')} KM</span>
+                        <span>${log.status}</span>
+                    </div>
+                    ${log.notes ? `<p class="text-[10px] text-slate-500 mt-1">${log.notes}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // شروع برنامه
+        loadCarData();
+    </script>
+</body>
+</html>
+
