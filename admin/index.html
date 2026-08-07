@@ -1,865 +1,621 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پنل مدیریت | اتو سرویس کومه</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-    body { font-family: 'Vazirmatn', sans-serif; background-color: #030508; }
-    .glass-card {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(7, 11, 20, 0.9) 100%);
-        backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-        border: 1px solid rgba(212, 165, 116, 0.18);
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    .nav-link.active { color: #f59e0b; background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
-    .view { display: none; }
-    .view.active { display: block; }
-    .spinner-ring { border: 2px solid rgba(245,158,11,0.2); border-left-color: #f59e0b; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; display:inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.3); border-radius: 10px; }
-    input, select, textarea { color-scheme: dark; }
-    .toast { animation: toast-in 0.3s ease-out; }
-    @keyframes toast-in { from { opacity:0; transform: translateY(10px);} to {opacity:1; transform:translateY(0);} }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#d4a574;--gold2:#b8845a;--gold-dim:rgba(212,165,116,0.12);--gold-border:rgba(212,165,116,0.18);
+  --bg:#030508;--bg2:#07090f;--bg3:#0c1018;--bg4:#111827;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;--text4:#1e293b;
+  --green:#34d399;--green-dim:rgba(52,211,153,0.12);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.12);
+  --violet:#a78bfa;--violet-dim:rgba(167,139,250,0.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,0.12);
+  --radius:10px;--radius2:14px;
+}
+body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:13px}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--gold2);border-radius:2px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--bg2);border-left:1px solid var(--gold-border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:200;transition:transform .3s;overflow-y:auto}
+.main-wrap{flex:1;margin-right:240px;display:flex;flex-direction:column;min-height:100vh}
+@media(max-width:768px){
+  .sidebar{transform:translateX(100%);width:260px}
+  .sidebar.open{transform:translateX(0)}
+  .main-wrap{margin-right:0}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;display:none}
+  .overlay.show{display:block}
+  .stat-grid{grid-template-columns:1fr 1fr!important}
+  .bi-grid{grid-template-columns:1fr!important}
+  .grid2{grid-template-columns:1fr!important}
+  .prod-grid{grid-template-columns:1fr 1fr!important}
+  .settings-grid{grid-template-columns:1fr!important}
+  .form-grid{grid-template-columns:1fr!important}
+  .hide-mobile{display:none!important}
+}
+@media(max-width:480px){.stat-grid{grid-template-columns:1fr!important}.prod-grid{grid-template-columns:1fr!important}}
+.logo{padding:18px 16px;border-bottom:1px solid var(--gold-border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,rgba(212,165,116,.25),rgba(212,165,116,.05));border:1px solid rgba(212,165,116,.4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-name{font-size:12px;font-weight:700;color:var(--gold);line-height:1.3}
+.logo-sub{font-size:10px;color:var(--text3);font-weight:400}
+nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:9px;color:var(--text4);font-weight:700;padding:10px 8px 4px;letter-spacing:.06em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:right;position:relative}
+.nav-item:hover{background:var(--gold-dim);color:var(--gold)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-border)}
+.nav-item .ico{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{background:var(--gold-dim);color:var(--gold);font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;margin-right:auto}
+.nav-badge.red{background:var(--red-dim);color:var(--red)}
+.sidebar-bot{padding:10px 8px 14px;border-top:1px solid var(--gold-border);flex-shrink:0}
+.webapp-btn{width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:9px;color:#030508;font-family:'Vazirmatn',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.webapp-btn:hover{filter:brightness(1.1)}
+.shop-info{text-align:center;padding:8px 0 4px;font-size:10px;color:var(--text3)}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--gold-border);padding:10px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.menu-btn{background:none;border:1px solid var(--gold-border);border-radius:8px;padding:7px 9px;color:var(--text2);cursor:pointer;font-size:16px;display:none}
+@media(max-width:768px){.menu-btn{display:flex}}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text);flex:1}
+.search-wrap{position:relative;flex:1;max-width:220px}
+.search-wrap input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--gold-border);border-radius:8px;padding:7px 32px 7px 10px;color:var(--text2);font-family:'Vazirmatn',sans-serif;font-size:11px;outline:none;transition:.15s}
+.search-wrap input:focus{border-color:rgba(212,165,116,.4);color:var(--text)}
+.search-ico{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text3)}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.tb-btn{background:rgba(255,255,255,.04);border:1px solid var(--gold-border);border-radius:8px;padding:7px 10px;color:var(--text2);cursor:pointer;font-size:14px;position:relative;transition:.15s}
+.tb-btn:hover{border-color:rgba(212,165,116,.4);color:var(--gold)}
+.notif-dot{position:absolute;top:4px;left:4px;width:7px;height:7px;background:var(--red);border-radius:50%;border:1px solid var(--bg2)}
+.avatar{width:32px;height:32px;background:linear-gradient(135deg,rgba(212,165,116,.3),rgba(212,165,116,.1));border:1px solid rgba(212,165,116,.35);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);cursor:pointer}
+.content{flex:1;padding:18px 20px;overflow-y:auto}
+@media(max-width:768px){.content{padding:12px}}
+.page{display:none}.page.active{display:block}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:var(--bg2);border:1px solid var(--gold-border);border-radius:var(--radius2);padding:16px;position:relative;overflow:hidden;cursor:default}
+.stat-glow{position:absolute;top:-16px;left:-16px;width:56px;height:56px;border-radius:50%;opacity:.07}
+.stat-label{font-size:10px;color:var(--text3);font-weight:500;margin-bottom:6px;position:relative}
+.stat-value{font-size:22px;font-weight:700;color:var(--text);position:relative;line-height:1}
+.stat-sub{font-size:10px;margin-top:5px;position:relative}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--text3)}
+.stat-icon{position:absolute;left:14px;top:14px;font-size:22px;opacity:.25}
+.bi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.bi-card{background:var(--bg2);border:1px solid var(--gold-border);border-radius:var(--radius2);padding:16px}
+.bi-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
+.bi-sub{font-size:9px;color:var(--text3);margin-bottom:12px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:100px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar-body{width:100%;border-radius:4px 4px 0 0;position:relative;min-height:4px;transition:.6s}
+.bar-lbl{font-size:8px;color:var(--text3)}
+.bar-val{font-size:8px;color:var(--gold);font-weight:600;position:absolute;top:-14px;left:0;right:0;text-align:center}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-legend{display:flex;flex-direction:column;gap:5px}
+.dl-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.funnel{display:flex;flex-direction:column;gap:4px}
+.funnel-row{display:flex;align-items:center;gap:8px;font-size:10px}
+.funnel-bar-wrap{flex:1;height:18px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-right:6px;font-size:9px;font-weight:600;color:#030508}
+.funnel-lbl{width:60px;color:var(--text2);text-align:left}
+.funnel-num{width:36px;color:var(--text3);text-align:left;font-size:9px}
+.table-card{background:var(--bg2);border:1px solid var(--gold-border);border-radius:var(--radius2);overflow:hidden;margin-bottom:16px}
+.table-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--gold-border)}
+.table-htitle{font-size:13px;font-weight:700;color:var(--text)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:600px}
+th{text-align:right;padding:9px 12px;color:var(--text3);font-weight:600;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(212,165,116,.08);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text2);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(212,165,116,.025)}
+.td-id{color:var(--gold);font-weight:600}
+.td-name{color:var(--text);font-weight:500}
+.badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;display:inline-block}
+.b-green{background:var(--green-dim);color:var(--green)}
+.b-amber{background:var(--amber-dim);color:var(--amber)}
+.b-blue{background:var(--blue-dim);color:var(--blue)}
+.b-red{background:var(--red-dim);color:var(--red)}
+.b-violet{background:var(--violet-dim);color:var(--violet)}
+.b-gold{background:var(--gold-dim);color:var(--gold)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid rgba(212,165,116,.06)}
+.fb{padding:5px 12px;border-radius:20px;border:1px solid var(--gold-border);background:transparent;color:var(--text2);font-family:'Vazirmatn',sans-serif;font-size:10px;cursor:pointer;transition:.15s}
+.fb.active,.fb:hover{background:var(--gold-dim);border-color:rgba(212,165,116,.4);color:var(--gold)}
+.btn{padding:7px 16px;border-radius:8px;border:none;font-family:'Vazirmatn',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#030508}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-ghost{background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold)}
+.btn-ghost:hover{background:rgba(212,165,116,.2)}
+.btn-sm{padding:4px 10px;font-size:10px}
+.btn-danger{background:var(--red-dim);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.ph-title{font-size:18px;font-weight:700;color:var(--text)}
+.ph-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.card{background:var(--bg2);border:1px solid var(--gold-border);border-radius:var(--radius2);padding:16px}
+.av{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av-g{background:var(--gold-dim);color:var(--gold)}
+.av-t{background:var(--green-dim);color:var(--green)}
+.av-v{background:var(--violet-dim);color:var(--violet)}
+.av-r{background:var(--red-dim);color:var(--red)}
+.av-b{background:var(--blue-dim);color:var(--blue)}
+.prog{margin-bottom:9px}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px}
+.prog-track{background:rgba(255,255,255,.05);border-radius:4px;height:6px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width 1s}
+.pf-gold{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.pf-green{background:linear-gradient(90deg,#0d9488,var(--green))}
+.pf-violet{background:linear-gradient(90deg,#6d28d9,var(--violet))}
+.pf-blue{background:linear-gradient(90deg,#1d4ed8,var(--blue))}
+.pf-red{background:linear-gradient(90deg,#991b1b,var(--red))}
+.prod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.prod-card{background:var(--bg2);border:1px solid var(--gold-border);border-radius:var(--radius2);overflow:hidden;transition:.2s}
+.prod-card:hover{border-color:rgba(212,165,116,.4);transform:translateY(-2px)}
+.prod-top{height:80px;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:28px;border-bottom:1px solid rgba(212,165,116,.06)}
+.prod-body{padding:12px}
+.prod-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.prod-brand{font-size:10px;color:var(--text3);margin-bottom:8px}
+.prod-row{display:flex;justify-content:space-between;align-items:center}
+.prod-price{font-size:12px;font-weight:700;color:var(--gold)}
+.prod-margin{font-size:9px;color:var(--green)}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sg{margin-bottom:13px}
+.sg label{display:block;font-size:10px;color:var(--text3);font-weight:500;margin-bottom:4px}
+.sg input,.sg select,.sg textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--gold-border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'Vazirmatn',sans-serif;font-size:11px;outline:none;transition:.15s}
+.sg input:focus,.sg select:focus,.sg textarea:focus{border-color:rgba(212,165,116,.45);background:rgba(212,165,116,.04)}
+.sg select option{background:var(--bg2)}
+.sg input[readonly]{opacity:.7;cursor:not-allowed}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.toggle{width:36px;height:20px;background:rgba(255,255,255,.08);border-radius:20px;position:relative;cursor:pointer;border:1px solid rgba(255,255,255,.1);flex-shrink:0;transition:.2s}
+.toggle.on{background:rgba(212,165,116,.35);border-color:rgba(212,165,116,.5)}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#aaa;border-radius:50%;top:2px;right:2px;transition:.2s}
+.toggle.on::after{right:auto;left:2px;background:var(--gold)}
+.toggle-label{font-size:11px;color:var(--text2)}
+.act-list{display:flex;flex-direction:column;gap:6px}
+.act-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;transition:.15s}
+.act-item:hover{background:rgba(212,165,116,.03)}
+.act-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.act-main{font-size:11px;color:var(--text);font-weight:500}
+.act-time{font-size:9px;color:var(--text3)}
+.modal-overlay{position:fixed;inset:0;background:rgba(3,5,8,.88);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;z-index:999;padding:16px;overflow-y:auto}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid rgba(212,165,116,.25);border-radius:16px;width:100%;max-width:480px;margin:auto}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--gold-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);border-radius:16px 16px 0 0;z-index:2}
+.modal-title{font-size:14px;font-weight:700;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1}
+.modal-body{padding:20px}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions .btn{flex:1;justify-content:center}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid .sg{margin-bottom:0}
+.span2{grid-column:span 2}
+.level-gold{background:linear-gradient(135deg,rgba(212,165,116,.25),rgba(184,132,90,.15));color:var(--gold);border:1px solid rgba(212,165,116,.3)}
+.level-silver{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2)}
+.level-bronze{background:rgba(180,140,100,.1);color:#b48c64;border:1px solid rgba(180,140,100,.2)}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.kpi-mini{flex:1;min-width:80px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:8px;padding:10px 12px}
+.kpi-mini-val{font-size:18px;font-weight:700;color:var(--text)}
+.kpi-mini-lbl{font-size:9px;color:var(--text3);margin-top:2px}
+.wp-preview{background:var(--bg);border:1px solid var(--gold-border);border-radius:10px;padding:14px;margin-bottom:14px}
+.wp-sec{font-size:9px;color:var(--gold);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.wp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.wp-item{background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:6px;padding:8px;text-align:center}
+.wp-label{font-size:9px;color:var(--text3)}
+.wp-val{font-size:13px;font-weight:700;color:var(--gold);margin-top:2px}
+.wp-status{display:flex;align-items:center;gap:6px;background:var(--green-dim);border:1px solid rgba(52,211,153,.2);border-radius:6px;padding:7px 10px}
+.wp-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg2);border:1px solid var(--gold-border);border-radius:10px;padding:10px 20px;font-size:12px;color:var(--text);z-index:9999;transition:.3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){table{min-width:520px}.bi-grid{grid-template-columns:1fr!important}}
+
+/* checkbox chips */
+.chip-group{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:8px;border:1px solid var(--gold-border);background:rgba(255,255,255,.03);color:var(--text2);font-size:11px;cursor:pointer;transition:.15s;user-select:none}
+.chip.sel{background:var(--gold-dim);border-color:rgba(212,165,116,.5);color:var(--gold);font-weight:600}
+.chip-with-brand{display:flex;flex-direction:column;gap:4px;border:1px solid var(--gold-border);border-radius:8px;padding:8px 10px;background:rgba(255,255,255,.02)}
+.chip-with-brand.sel{border-color:rgba(212,165,116,.5);background:var(--gold-dim)}
+.chip-with-brand .chk-row{display:flex;align-items:center;gap:6px;cursor:pointer}
+.chip-with-brand select{margin-top:4px;display:none}
+.chip-with-brand.sel select{display:block}
+
+/* alerts/notif panel */
+.notif-panel{position:fixed;left:20px;top:60px;width:320px;max-width:calc(100vw - 40px);background:var(--bg2);border:1px solid var(--gold-border);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.6);z-index:500;display:none;max-height:70vh;overflow-y:auto}
+.notif-panel.show{display:block}
+.notif-h{padding:12px 16px;border-bottom:1px solid var(--gold-border);font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.notif-item{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:10px;cursor:pointer}
+.notif-item:hover{background:rgba(212,165,116,.03)}
+.notif-item:last-child{border-bottom:none}
+.notif-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* api-only badge */
+.api-only{font-size:8px;background:rgba(167,139,250,.15);color:var(--violet);padding:1px 6px;border-radius:10px;margin-right:5px;font-weight:700}
+.section-divider{display:flex;align-items:center;gap:8px;margin:16px 0 10px;font-size:11px;font-weight:700;color:var(--violet)}
+.section-divider::after{content:'';flex:1;height:1px;background:rgba(167,139,250,.2)}
+.info-box{background:var(--violet-dim);border:1px solid rgba(167,139,250,.2);border-radius:8px;padding:10px 12px;font-size:10px;color:var(--text2);margin-bottom:12px;line-height:1.7}
+
+/* autocomplete dropdown */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:100%;right:0;left:0;background:var(--bg3);border:1px solid var(--gold-border);border-radius:8px;margin-top:4px;max-height:160px;overflow-y:auto;z-index:50;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:8px 12px;font-size:11px;color:var(--text2);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03)}
+.ac-item:hover{background:var(--gold-dim);color:var(--gold)}
+.ac-item:last-child{border-bottom:none}
+.found-tag{font-size:9px;color:var(--green);margin-top:3px;display:none}
+.found-tag.show{display:block}
 </style>
 </head>
-<body class="text-slate-100 antialiased min-h-screen">
+<body>
 
-<!-- ==================== صفحه ورود ==================== -->
-<div id="view-login" class="view active min-h-screen flex items-center justify-center p-4">
-    <div class="glass-card rounded-3xl p-8 max-w-sm w-full">
-        <div class="flex flex-col items-center mb-6">
-            <div class="w-14 h-14 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30 mb-3">
-                <i data-lucide="wrench" class="w-6 h-6 text-amber-500"></i>
-            </div>
-            <h1 class="text-lg font-black text-white">پنل مدیریت کومه</h1>
-            <p class="text-[10px] text-slate-400 mt-1">ورود مخصوص کارکنان اتوسرویس</p>
-        </div>
-
-        <div id="login-error" class="hidden mb-4 bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl flex items-start gap-2">
-            <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
-            <span id="login-error-text"></span>
-        </div>
-
-        <form onsubmit="handleLogin(event)" class="space-y-3.5">
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">ایمیل</label>
-                <input id="login-email" type="email" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-3 text-slate-100 focus:border-amber-500 focus:outline-none" placeholder="admin@komeh.ir">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">رمز عبور</label>
-                <input id="login-password" type="password" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-3 text-slate-100 focus:border-amber-500 focus:outline-none" placeholder="••••••••">
-            </div>
-            <button id="btn-login" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition-all flex items-center justify-center gap-2">
-                <span>ورود به پنل</span>
-            </button>
-        </form>
+<!-- ====== LOGIN GATE (اضافه‌شده برای ورود امن ادمین‌ها) ====== -->
+<div class="modal-overlay show" id="login-gate" style="z-index:9998">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head"><div class="modal-title">🔧 ورود به پنل مدیریت کومه</div></div>
+    <div class="modal-body">
+      <div id="login-error" style="display:none;background:var(--red-dim);border:1px solid rgba(248,113,113,.3);color:var(--red);font-size:11px;padding:8px 10px;border-radius:8px;margin-bottom:10px"></div>
+      <div class="sg"><label>ایمیل</label><input id="login-email" type="email" placeholder="admin@komeauto.ir"/></div>
+      <div class="sg"><label>رمز عبور</label><input id="login-password" type="password" placeholder="••••••••"/></div>
+      <div class="modal-actions">
+        <button class="btn btn-gold" style="flex:1;justify-content:center" onclick="handleAdminLogin()" id="login-btn">ورود</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- ==================== اپ اصلی (بعد از لاگین) ==================== -->
-<div id="view-app" class="view">
-    <!-- نویگیشن بالا -->
-    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/90 backdrop-blur-md border-b border-white/5 py-3 px-4">
-        <div class="max-w-6xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30">
-                    <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xs font-black text-white">پنل مدیریت کومه</span>
-                    <span id="current-admin-name" class="text-[9px] text-amber-500/70"></span>
-                </div>
-            </div>
-            <button onclick="handleLogout()" class="flex items-center gap-1.5 text-slate-400 hover:text-rose-400 text-[10px] font-bold transition-colors">
-                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                <span>خروج</span>
-            </button>
-        </div>
-    </nav>
+<div id="app-shell" style="display:none">
 
-    <div class="max-w-6xl mx-auto pt-20 px-4 pb-10 flex gap-5">
-        <!-- منوی کناری -->
-        <aside class="w-44 shrink-0 hidden md:block">
-            <div class="glass-card rounded-2xl p-2 space-y-1 sticky top-20">
-                <button onclick="switchView('dashboard')" data-nav="dashboard" class="nav-link active w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> داشبورد
-                </button>
-                <button onclick="switchView('cars')" data-nav="cars" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
-                    <i data-lucide="car" class="w-4 h-4"></i> خودروها و مشتری‌ها
-                </button>
-                <button onclick="switchView('parts')" data-nav="parts" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
-                    <i data-lucide="list-tree" class="w-4 h-4"></i> کاتالوگ قطعات
-                </button>
-                <button onclick="switchView('admins')" data-nav="admins" class="nav-link w-full flex items-center gap-2 text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-transparent transition-colors">
-                    <i data-lucide="users" class="w-4 h-4"></i> کاربران ادمین
-                </button>
-            </div>
-        </aside>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-        <!-- نویگیشن موبایل -->
-        <div class="fixed bottom-3 inset-x-3 z-40 md:hidden">
-            <div class="glass-card rounded-2xl p-1.5 flex items-center justify-around">
-                <button onclick="switchView('dashboard')" data-nav-m="dashboard" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-amber-500 rounded-xl">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">داشبورد</span>
-                </button>
-                <button onclick="switchView('cars')" data-nav-m="cars" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
-                    <i data-lucide="car" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">خودروها</span>
-                </button>
-                <button onclick="switchView('parts')" data-nav-m="parts" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
-                    <i data-lucide="list-tree" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">قطعات</span>
-                </button>
-                <button onclick="switchView('admins')" data-nav-m="admins" class="nav-link-m flex flex-col items-center py-1.5 px-2 text-slate-400 rounded-xl">
-                    <i data-lucide="users" class="w-4 h-4 mb-0.5"></i><span class="text-[8px] font-bold">ادمین‌ها</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- محتوای اصلی -->
-        <main class="flex-1 min-w-0 pb-24 md:pb-0">
-
-            <!-- ---------- داشبورد ---------- -->
-            <section id="section-dashboard" class="space-y-5">
-                <h2 class="text-lg font-black text-white">داشبورد کلی</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="glass-card rounded-2xl p-4">
-                        <span class="text-[10px] text-slate-400">تعداد مشتری‌ها</span>
-                        <div id="stat-customers" class="text-xl font-black text-white mt-1">—</div>
-                    </div>
-                    <div class="glass-card rounded-2xl p-4">
-                        <span class="text-[10px] text-slate-400">تعداد خودروها</span>
-                        <div id="stat-cars" class="text-xl font-black text-white mt-1">—</div>
-                    </div>
-                    <div class="glass-card rounded-2xl p-4">
-                        <span class="text-[10px] text-slate-400">سرویس این ماه</span>
-                        <div id="stat-services" class="text-xl font-black text-amber-400 mt-1">—</div>
-                    </div>
-                    <div class="glass-card rounded-2xl p-4">
-                        <span class="text-[10px] text-slate-400">پیامک ارسالی</span>
-                        <div id="stat-sms" class="text-xl font-black text-white mt-1">—</div>
-                    </div>
-                </div>
-
-                <div class="glass-card rounded-2xl p-5">
-                    <h3 class="text-xs font-bold text-slate-200 mb-3 flex items-center gap-1.5">
-                        <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> آخرین سرویس‌های ثبت‌شده
-                    </h3>
-                    <div id="dashboard-recent-services" class="space-y-2 text-xs text-slate-400">در حال بارگذاری...</div>
-                </div>
-            </section>
-
-            <!-- ---------- خودروها و مشتری‌ها ---------- -->
-            <section id="section-cars" class="space-y-5 hidden">
-                <div class="flex items-center justify-between flex-wrap gap-3">
-                    <h2 class="text-lg font-black text-white">خودروها و مشتری‌ها</h2>
-                    <div class="flex gap-2">
-                        <input id="car-search" oninput="renderCarsList()" type="text" placeholder="جستجو با نام یا شماره موبایل..." class="bg-slate-950 border border-slate-800 text-xs rounded-xl px-3 py-2 text-slate-100 focus:border-amber-500 focus:outline-none w-52">
-                        <button onclick="openCustomerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> مشتری جدید
-                        </button>
-                    </div>
-                </div>
-
-                <div id="cars-list-container" class="grid md:grid-cols-2 gap-3"></div>
-            </section>
-
-            <!-- ---------- کاتالوگ قطعات ---------- -->
-            <section id="section-parts" class="space-y-5 hidden">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-black text-white">کاتالوگ قطعات و بازه تعویض</h2>
-                    <button onclick="openPartModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
-                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> قطعه جدید
-                    </button>
-                </div>
-                <div id="parts-list-container" class="glass-card rounded-2xl divide-y divide-slate-800/60"></div>
-            </section>
-
-            <!-- ---------- کاربران ادمین ---------- -->
-            <section id="section-admins" class="space-y-5 hidden">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-black text-white">کاربران ادمین</h2>
-                    <button onclick="openAdminModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
-                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> ادمین جدید
-                    </button>
-                </div>
-                <p class="text-[11px] text-slate-500">فقط کاربر با نقش «مالک» می‌تواند ادمین اضافه یا ویرایش کند.</p>
-                <div id="admins-list-container" class="glass-card rounded-2xl divide-y divide-slate-800/60"></div>
-            </section>
-
-        </main>
-    </div>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🔧</div>
+    <div><div class="logo-name">اتو سرویس کومه</div><div class="logo-sub">پنل مدیریت حرفه‌ای</div></div>
+  </div>
+  <nav>
+    <div class="nav-sec">اصلی</div>
+    <button class="nav-item active" onclick="go('dashboard',this)"><span class="ico">📊</span>داشبورد</button>
+    <button class="nav-item" onclick="go('services',this)"><span class="ico">🛠️</span>سرویس‌ها<span class="nav-badge red">۲۳</span></button>
+    <button class="nav-item" onclick="go('customers',this)"><span class="ico">👥</span>مشتریان</button>
+    <button class="nav-item" onclick="go('signups',this)"><span class="ico">📝</span>ثبت‌نامی‌های جدید<span class="nav-badge" id="signups-badge">۰</span></button>
+    <button class="nav-item" onclick="go('invoice',this)"><span class="ico">🧾</span>ریز فاکتورها</button>
+    <div class="nav-sec">انبار</div>
+    <button class="nav-item" onclick="go('products',this)"><span class="ico">🛢️</span>محصولات<span class="nav-badge red">۳</span></button>
+    <div class="nav-sec">تحلیل</div>
+    <button class="nav-item" onclick="go('analytics',this)"><span class="ico">📈</span>گزارش و تحلیل</button>
+    <button class="nav-item" onclick="go('followup',this)"><span class="ico">📞</span>پیگیری مشتریان<span class="nav-badge" id="followup-badge">۰</span></button>
+    <div class="nav-sec">سیستم</div>
+    <button class="nav-item" onclick="go('settings',this)"><span class="ico">⚙️</span>تنظیمات</button>
+  </nav>
+  <div class="sidebar-bot">
+    <button class="webapp-btn" onclick="openModal('webapp-modal')">🔗 وب‌اپ مشتری</button>
+    <div class="shop-info">حسین | اتو سرویس کومه</div>
+  </div>
 </div>
 
-<!-- ==================== مدال: مشتری + خودرو جدید ==================== -->
-<div id="modal-customer" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-md w-full space-y-4 max-h-[90vh] overflow-y-auto">
-        <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-amber-500"></i> ثبت مشتری و خودرو جدید</h4>
-        <form onsubmit="saveCustomerAndCar(event)" class="space-y-3">
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">نام مشتری *</label>
-                <input id="new-customer-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">شماره موبایل *</label>
-                <input id="new-customer-phone" required placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div class="border-t border-slate-800 pt-3">
-                <label class="block text-[10px] text-slate-400 mb-1">مدل خودرو *</label>
-                <input id="new-car-model" required placeholder="مثلاً: پژو 207 آی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی *</label>
-                    <input id="new-car-km" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">شماره پلاک</label>
-                    <input id="new-car-plate" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button type="button" onclick="closeModal('modal-customer')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
-                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
-            </div>
-        </form>
+<!-- MAIN -->
+<div class="main-wrap">
+  <div class="topbar">
+    <button class="menu-btn" onclick="openSidebar()">☰</button>
+    <div class="topbar-title" id="page-title">داشبورد</div>
+    <div class="search-wrap hide-mobile"><span class="search-ico">🔍</span><input type="text" placeholder="جستجو در سیستم..."/></div>
+    <div class="topbar-actions">
+      <button class="tb-btn" onclick="openModal('booking-modal')" title="رزرو نوبت جدید">📅</button>
+      <button class="tb-btn" onclick="openModal('service-modal')" title="سرویس جدید">➕</button>
+      <div style="position:relative">
+        <button class="tb-btn" id="bell-btn" onclick="toggleNotif()">🔔<span class="notif-dot" id="notif-dot"></span></button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-h"><span>🔔 هشدارها (Alerts)</span><span style="font-size:9px;color:var(--text3);cursor:pointer" onclick="clearNotifs()">پاک کردن همه</span></div>
+          <div id="notif-list"></div>
+        </div>
+      </div>
+      <button class="webapp-btn hide-mobile" style="width:auto;padding:7px 12px;font-size:10px;border-radius:8px" onclick="openModal('webapp-modal')">🔗 وب‌اپ</button>
+      <div class="avatar">ح</div>
     </div>
-</div>
+  </div>
 
-<!-- ==================== مدال: جزئیات خودرو + ثبت سرویس ==================== -->
-<div id="modal-car-detail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-lg w-full space-y-4 max-h-[92vh] overflow-y-auto">
-        <div class="flex items-center justify-between">
-            <h4 id="car-detail-title" class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="car" class="w-4 h-4 text-amber-500"></i></h4>
-            <button onclick="closeModal('modal-car-detail')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
+  <div class="content">
 
-        <div id="car-detail-link-box" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
-            <span class="text-[10px] text-slate-400 truncate flex-1" id="car-detail-link"></span>
-            <button onclick="copyCarLink()" class="text-amber-400 text-[10px] font-bold shrink-0 flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> کپی</button>
-        </div>
-        <button onclick="sendCarLinkSms()" id="btn-send-sms" class="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
-            <i data-lucide="send" class="w-3.5 h-3.5"></i> ارسال لینک پرونده به مشتری (پیامک)
-        </button>
-
-        <div class="grid grid-cols-2 gap-2">
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی</label>
-                <input id="edit-car-km" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">سرویس بعدی (KM)</label>
-                <input id="edit-car-next-km" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-        </div>
-        <button onclick="updateCarStats()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-[11px]">به‌روزرسانی کیلومتر</button>
-
-        <div class="border-t border-slate-800 pt-4">
-            <h5 class="text-xs font-bold text-amber-400 mb-3 flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4"></i> ثبت سرویس رسمی جدید</h5>
-            <form onsubmit="saveOfficialService(event)" class="space-y-2.5">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] text-slate-400 mb-1">تاریخ *</label>
-                        <input id="svc-date" required placeholder="1403/05/20" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-slate-400 mb-1">کیلومتر سرویس *</label>
-                        <input id="svc-km" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">علت مراجعه</label>
-                    <input id="svc-reason" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">روغن موتور استفاده‌شده</label>
-                    <input id="svc-oil" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">وضعیت گیربکس</label>
-                    <input id="svc-gearbox" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">قطعات/کارهای انجام‌شده (با کاما جدا کن)</label>
-                    <input id="svc-parts" placeholder="Castrol Edge, تعویض ۴ فیلتر" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">جمع‌بندی فنی</label>
-                    <textarea id="svc-summary" rows="2" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></textarea>
-                </div>
-                <label class="flex items-center gap-2 text-[10px] text-slate-400">
-                    <input id="svc-featured" type="checkbox" checked class="accent-amber-500"> نمایش به عنوان «آخرین سرویس ویژه»
-                </label>
-                <button type="submit" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-xs">ثبت سرویس</button>
-            </form>
-        </div>
-
-        <div class="border-t border-slate-800 pt-4">
-            <h5 class="text-xs font-bold text-slate-300 mb-2">تاریخچه سرویس‌های ثبت‌شده</h5>
-            <div id="car-services-history" class="space-y-2"></div>
-        </div>
+  <!-- ====== DASHBOARD ====== -->
+  <div class="page active" id="page-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-glow" style="background:var(--gold)"></div><div class="stat-icon">💰</div><div class="stat-label">درآمد این ماه</div><div class="stat-value">۴۸.۲ م</div><div class="stat-sub up">↑ ۱۲٪ نسبت به ماه قبل</div></div>
+      <div class="stat-card"><div class="stat-glow" style="background:var(--green)"></div><div class="stat-icon">🛠️</div><div class="stat-label">سرویس‌های امروز</div><div class="stat-value">۱۴</div><div class="stat-sub up">↑ ۳ نسبت به دیروز</div></div>
+      <div class="stat-card"><div class="stat-glow" style="background:var(--blue)"></div><div class="stat-icon">📅</div><div class="stat-label">رزروهای امروز</div><div class="stat-value" id="dash-booking-count">۲</div><div class="stat-sub up" id="dash-booking-sub">منتظر تایید</div></div>
+      <div class="stat-card"><div class="stat-glow" style="background:var(--violet)"></div><div class="stat-icon">⭐</div><div class="stat-label">رضایت مشتری</div><div class="stat-value">۹۴٪</div><div class="stat-sub neutral">→ ثابت</div></div>
     </div>
-</div>
 
-<!-- ==================== مدال: قطعه کاتالوگ ==================== -->
-<div id="modal-part" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-3">
-        <h4 class="text-sm font-bold text-white">افزودن قطعه به کاتالوگ</h4>
-        <form onsubmit="savePart(event)" class="space-y-3">
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">دسته‌بندی *</label>
-                <select id="part-cat" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                    <option value="engine">موتور و تعلیق وابسته</option>
-                    <option value="gearbox">گیربکس و انتقال قدرت</option>
-                    <option value="brakes">سیستم ترمز</option>
-                    <option value="suspension">جلوبندی و تعلیق</option>
-                    <option value="hvac">کولر و بخاری</option>
-                    <option value="electric">برق خودرو</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">نام قطعه *</label>
-                <input id="part-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">بازه پیشنهادی تعویض (KM) *</label>
-                <input id="part-interval" type="number" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div class="flex gap-2 pt-1">
-                <button type="button" onclick="closeModal('modal-part')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
-                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
-            </div>
-        </form>
+    <div class="bi-grid" style="grid-template-columns:2fr 1fr 1fr;margin-bottom:14px">
+      <div class="bi-card">
+        <div class="bi-title">درآمد ماهانه<span style="font-size:9px;color:var(--gold);cursor:pointer">۶ ماه اخیر</span></div>
+        <div class="bi-sub">مجموع مبلغ فاکتورها (هزار تومان)</div>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar-body" style="height:55%;background:linear-gradient(0deg,var(--gold2),var(--gold));border-radius:4px 4px 0 0"><span class="bar-val">۳۸</span></div><div class="bar-lbl">مهر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:70%;background:linear-gradient(0deg,var(--gold2),var(--gold));border-radius:4px 4px 0 0"><span class="bar-val">۴۲</span></div><div class="bar-lbl">آبان</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:50%;background:linear-gradient(0deg,var(--gold2),var(--gold));border-radius:4px 4px 0 0"><span class="bar-val">۳۵</span></div><div class="bar-lbl">آذر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:45%;background:rgba(212,165,116,.2);border-radius:4px 4px 0 0"><span class="bar-val" style="color:var(--text3)">۳۲</span></div><div class="bar-lbl">دی</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:80%;background:linear-gradient(0deg,var(--gold2),var(--gold));border-radius:4px 4px 0 0"><span class="bar-val">۴۵</span></div><div class="bar-lbl">بهمن</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:100%;background:linear-gradient(0deg,#e8b27a,#f5d49e);border-radius:4px 4px 0 0;box-shadow:0 0 12px rgba(212,165,116,.3)"><span class="bar-val" style="color:#030508">۴۸</span></div><div class="bar-lbl" style="color:var(--gold)">اردی</div></div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">نوع سرویس‌ها</div>
+        <div class="bi-sub">این ماه</div>
+        <div class="donut-wrap">
+          <svg width="70" height="70" viewBox="0 0 70 70">
+            <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="10"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="var(--gold)" stroke-width="10" stroke-dasharray="105 71" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="var(--green)" stroke-width="10" stroke-dasharray="43 133" stroke-dashoffset="-105" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="var(--violet)" stroke-width="10" stroke-dasharray="27 149" stroke-dashoffset="-148" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+            <text x="35" y="39" text-anchor="middle" font-size="10" fill="var(--text)" font-weight="700" font-family="Vazirmatn">۱۵۶</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="dl-item"><div class="dl-dot" style="background:var(--gold)"></div>روغن ۶۷٪</div>
+            <div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div>فیلتر ۲۸٪</div>
+            <div class="dl-item"><div class="dl-dot" style="background:var(--violet)"></div>گیربکس ۵٪</div>
+          </div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">سطح مشتریان</div>
+        <div class="bi-sub">توزیع مشتریان</div>
+        <div class="funnel">
+          <div class="funnel-row"><div class="funnel-lbl">طلایی</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:25%;background:linear-gradient(90deg,var(--gold2),var(--gold))">۲۵٪</div></div><div class="funnel-num">۹۶</div></div>
+          <div class="funnel-row"><div class="funnel-lbl">نقره‌ای</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:45%;background:linear-gradient(90deg,#64748b,#94a3b8)">۴۵٪</div></div><div class="funnel-num">۱۷۴</div></div>
+          <div class="funnel-row"><div class="funnel-lbl">برنزی</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:30%;background:linear-gradient(90deg,#78420a,#b48c64)">۳۰٪</div></div><div class="funnel-num">۱۱۶</div></div>
+        </div>
+      </div>
     </div>
-</div>
 
-<!-- ==================== مدال: ادمین جدید ==================== -->
-<div id="modal-admin" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-3">
-        <h4 class="text-sm font-bold text-white">افزودن ادمین جدید</h4>
-        <p class="text-[10px] text-slate-500 leading-relaxed">
-            چون ساخت کاربر جدید نیاز به دسترسی امن سرور دارد، ابتدا کاربر را از
-            Supabase Dashboard → Authentication → Add User بساز، سپس UUID او را اینجا وارد کن تا نقش بگیرد.
-        </p>
-        <form onsubmit="saveAdmin(event)" class="space-y-3">
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">UUID کاربر (از Supabase Auth) *</label>
-                <input id="admin-uuid" required placeholder="00000000-0000-0000-0000-000000000000" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">نام کامل *</label>
-                <input id="admin-name" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">نقش *</label>
-                <select id="admin-role" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
-                    <option value="staff">متصدی (staff)</option>
-                    <option value="manager">مدیر (manager)</option>
-                    <option value="owner">مالک (owner)</option>
-                </select>
-            </div>
-            <div class="flex gap-2 pt-1">
-                <button type="button" onclick="closeModal('modal-admin')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs">انصراف</button>
-                <button type="submit" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs">ثبت</button>
-            </div>
-        </form>
+    <div class="grid2">
+      <div class="table-card">
+        <div class="table-header"><span class="table-htitle">آخرین سرویس‌ها</span><button class="btn btn-ghost btn-sm" onclick="go('services',document.querySelectorAll('.nav-item')[1])">همه ←</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>شناسه فاکتور</th><th>موبایل</th><th>خودرو</th><th>برند روغن</th><th>SAE</th><th>کیلومتر</th><th>وضعیت</th></tr></thead>
+            <tbody id="dash-recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="bi-title" style="margin-bottom:10px">فعالیت اخیر</div>
+        <div class="act-list" id="dash-activity">
+          <div class="act-item"><div class="act-ico" style="background:var(--gold-dim);color:var(--gold)">🛢️</div><div><div class="act-main">تعویض روغن 15W40</div><div class="act-time">پراید رضایی · ۱۰ دقیقه</div></div></div>
+          <div class="act-item"><div class="act-ico" style="background:var(--green-dim);color:var(--green)">👤</div><div><div class="act-main">مشتری جدید ثبت شد</div><div class="act-time">نازنین موسوی · ۳۵ دقیقه</div></div></div>
+          <div class="act-item"><div class="act-ico" style="background:var(--blue-dim);color:var(--blue)">📩</div><div><div class="act-main">لینک پرونده ارسال شد</div><div class="act-time">احمدی · ۱ ساعت</div></div></div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Toast container -->
-<div id="toast-container" class="fixed bottom-4 left-4 z-[60] space-y-2"></div>
+  <!-- ====== SERVICES ====== -->
+  <div class="page" id="page-services">
+    <div class="ph">
+      <div><div class="ph-title">سرویس‌ها — سلامت خودرو</div><div class="ph-sub">بر اساس شیت «سرویس‌ها سلامت خودرو»</div></div>
+      <button class="btn btn-gold" onclick="openModal('service-modal')">➕ سرویس جدید</button>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-mini"><div class="kpi-mini-val">۲۳</div><div class="kpi-mini-lbl">در انتظار</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val">۸</div><div class="kpi-mini-lbl">در حال سرویس</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val">۱۱۵</div><div class="kpi-mini-lbl">تحویل‌شده</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--gold)">۱۵۶</div><div class="kpi-mini-lbl">کل این ماه</div></div>
+    </div>
+    <div class="table-card">
+      <div class="filters"><button class="fb active">همه</button><button class="fb">انتظار</button><button class="fb">سرویس</button><button class="fb">تحویل</button><button class="fb">لغو</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>شناسه فاکتور</th><th>تاریخ شمسی</th><th>موبایل</th><th>خودرو</th><th>علت مراجعه</th><th>برند روغن</th><th>SAE</th><th>کیلومتر فعلی</th><th>سرویس بعدی</th><th>فیلترها</th><th>واسکازین</th><th>وضعیت روغن</th><th>مبلغ نهایی</th><th>عملیات</th></tr></thead>
+          <tbody id="services-tbody"></tbody>
+        </table>
+      </div>
+    </div>
 
-<script>
-lucide.createIcons();
-
-// ============================================================
-// تنظیمات Supabase — این دو مقدار را بعد از ساخت پروژه جایگزین کن
-// این‌ها کلید عمومی (anon) هستند و امن است که در کد فرانت باشند
-// چون دسترسی واقعی توسط RLS (Row Level Security) کنترل می‌شود
-// ============================================================
-const SUPABASE_URL = "https://ujrsgnrrhxzsgjcuzbrj.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqcnNnbnJyaHh6c2dqY3V6YnJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzk4NTQsImV4cCI6MjEwMDcxNTg1NH0.8E6TfofaPCSMjfgK_NjQAZf7-dOyGSvEhwfKCcgvEGc";
-
-// آدرس پایه‌ای که پرونده مشتری روی آن هاست می‌شود (برای ساخت لینک)
-const CUSTOMER_FILE_BASE_URL = "https://komeauto.ir/car"; // اگه دامنه دقیقاً همینه مشکلی نیست، اگه فرق داره بگو عوضش کنم
-
-// آدرس Edge Function ارسال پیامک (بعداً می‌سازیمش)
-const SMS_EDGE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/send-car-link-sms";
-
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-let currentAdmin = null;
-let allCustomers = [];
-let allCars = [];
-let allParts = [];
-let allAdmins = [];
-let activeCarId = null;
-
-function showToast(msg, type = 'success') {
-    const el = document.createElement('div');
-    const color = type === 'success' ? 'border-emerald-500/40 text-emerald-400' : 'border-rose-500/40 text-rose-400';
-    el.className = `toast glass-card ${color} rounded-xl px-4 py-2.5 text-xs font-bold`;
-    el.innerText = msg;
-    document.getElementById('toast-container').appendChild(el);
-    setTimeout(() => el.remove(), 3500);
-}
-
-function closeModal(id) {
-    const m = document.getElementById(id);
-    m.classList.remove('flex');
-    m.classList.add('hidden');
-}
-function openModal(id) {
-    const m = document.getElementById(id);
-    m.classList.remove('hidden');
-    m.classList.add('flex');
-    lucide.createIcons();
-}
-
-// ------------------------------------------------------------
-// احراز هویت
-// ------------------------------------------------------------
-async function handleLogin(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-login');
-    const errBox = document.getElementById('login-error');
-    errBox.classList.add('hidden');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-ring"></span>';
-
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-        document.getElementById('login-error-text').innerText = "ایمیل یا رمز عبور اشتباه است.";
-        errBox.classList.remove('hidden');
-        btn.disabled = false;
-        btn.innerHTML = '<span>ورود به پنل</span>';
-        return;
-    }
-
-    await loadCurrentAdmin();
-}
-
-async function loadCurrentAdmin() {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) { showLoginView(); return; }
-
-    const { data: profile, error } = await sb.from('admin_profiles').select('*').eq('id', user.id).single();
-
-    if (error || !profile || !profile.is_active) {
-        await sb.auth.signOut();
-        document.getElementById('login-error-text').innerText = "این حساب دسترسی ادمین فعال ندارد.";
-        document.getElementById('login-error').classList.remove('hidden');
-        showLoginView();
-        return;
-    }
-
-    currentAdmin = profile;
-    document.getElementById('current-admin-name').innerText = `${profile.full_name} (${roleLabel(profile.role)})`;
-    showAppView();
-    switchView('dashboard');
-    loadAllData();
-}
-
-function roleLabel(r) {
-    return { owner: 'مالک', manager: 'مدیر', staff: 'متصدی' }[r] || r;
-}
-
-async function handleLogout() {
-    await sb.auth.signOut();
-    location.reload();
-}
-
-function showLoginView() {
-    document.getElementById('view-login').classList.add('active');
-    document.getElementById('view-app').classList.remove('active');
-}
-function showAppView() {
-    document.getElementById('view-login').classList.remove('active');
-    document.getElementById('view-app').classList.add('active');
-}
-
-// ------------------------------------------------------------
-// ناوبری
-// ------------------------------------------------------------
-function switchView(name) {
-    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-    document.getElementById('section-' + name).classList.remove('hidden');
-    document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
-    document.querySelectorAll('.nav-link-m').forEach(b => {
-        const isActive = b.dataset.navM === name;
-        b.className = 'nav-link-m flex flex-col items-center py-1.5 px-2 rounded-xl ' + (isActive ? 'text-amber-500' : 'text-slate-400');
-    });
-}
-
-// ------------------------------------------------------------
-// بارگذاری داده‌ها
-// ------------------------------------------------------------
-async function loadAllData() {
-    await Promise.all([loadCustomersAndCars(), loadParts(), loadAdmins(), loadDashboardStats()]);
-}
-
-async function loadCustomersAndCars() {
-    const { data: customers } = await sb.from('customers').select('*').order('created_at', { ascending: false });
-    const { data: cars } = await sb.from('cars').select('*').order('created_at', { ascending: false });
-    allCustomers = customers || [];
-    allCars = cars || [];
-    renderCarsList();
-}
-
-function renderCarsList() {
-    const q = (document.getElementById('car-search')?.value || '').trim().toLowerCase();
-    const container = document.getElementById('cars-list-container');
-    if (!container) return;
-
-    const filteredCars = allCars.filter(car => {
-        const cust = allCustomers.find(c => c.id === car.customer_id);
-        if (!q) return true;
-        return (cust?.full_name || '').toLowerCase().includes(q) || (cust?.phone || '').includes(q) || car.model.toLowerCase().includes(q);
-    });
-
-    if (filteredCars.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 col-span-2 text-center py-8">موردی یافت نشد.</div>`;
-        return;
-    }
-
-    container.innerHTML = filteredCars.map(car => {
-        const cust = allCustomers.find(c => c.id === car.customer_id);
-        return `
-        <button onclick="openCarDetail('${car.id}')" class="glass-card rounded-2xl p-4 text-right hover:border-amber-500/40 transition-colors">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-black text-white">${car.model}</span>
-                <span class="text-[9px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">${Number(car.current_km).toLocaleString('fa-IR')} KM</span>
-            </div>
-            <div class="text-[10px] text-slate-400 flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3"></i> ${cust?.full_name || '—'}</div>
-            <div class="text-[10px] text-slate-500 flex items-center gap-1.5 mt-1"><i data-lucide="phone" class="w-3 h-3"></i> ${cust?.phone || '—'}</div>
-        </button>`;
-    }).join('');
-    lucide.createIcons();
-}
-
-async function loadParts() {
-    const { data } = await sb.from('parts_catalog').select('*').order('category');
-    allParts = data || [];
-    renderPartsList();
-}
-
-const catLabels = { engine: 'موتور', gearbox: 'گیربکس', brakes: 'ترمز', suspension: 'جلوبندی', hvac: 'کولر/بخاری', electric: 'برق خودرو' };
-
-function renderPartsList() {
-    const container = document.getElementById('parts-list-container');
-    if (!container) return;
-    if (allParts.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">هنوز قطعه‌ای ثبت نشده.</div>`;
-        return;
-    }
-    container.innerHTML = allParts.map(p => `
-        <div class="p-3.5 flex items-center justify-between">
-            <div>
-                <span class="text-xs text-white font-bold">${p.part_name}</span>
-                <span class="text-[9px] text-slate-500 block">${catLabels[p.category] || p.category}</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-[10px] text-amber-400 font-bold">${Number(p.default_interval_km).toLocaleString('fa-IR')} KM</span>
-                <button onclick="deletePart('${p.id}')" class="text-slate-600 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-            </div>
+    <div class="section-divider">📊 تحلیل سرویس‌ها (Power BI)</div>
+    <div class="bi-grid">
+      <div class="bi-card">
+        <div class="bi-title">روند روزانه سرویس‌ها</div>
+        <div class="bi-sub">۷ روز اخیر</div>
+        <div class="bar-chart" style="height:80px">
+          <div class="bar-col"><div class="bar-body" style="height:60%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">ش</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:85%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">ی</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:55%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">د</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:100%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">س</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:70%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">چ</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:90%;background:var(--gold-dim);border-top:2px solid var(--gold);border-radius:4px 4px 0 0"></div><div class="bar-lbl">پ</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:30%;background:rgba(212,165,116,.06);border-top:1px dashed rgba(212,165,116,.3);border-radius:4px 4px 0 0"></div><div class="bar-lbl">ج</div></div>
         </div>
-    `).join('');
-    lucide.createIcons();
-}
-
-async function loadAdmins() {
-    const { data } = await sb.from('admin_profiles').select('*').order('created_at');
-    allAdmins = data || [];
-    renderAdminsList();
-}
-
-function renderAdminsList() {
-    const container = document.getElementById('admins-list-container');
-    if (!container) return;
-    if (allAdmins.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">هنوز ادمینی ثبت نشده.</div>`;
-        return;
-    }
-    container.innerHTML = allAdmins.map(a => `
-        <div class="p-3.5 flex items-center justify-between">
-            <div>
-                <span class="text-xs text-white font-bold">${a.full_name}</span>
-                <span class="text-[9px] text-slate-500 block">${roleLabel(a.role)}</span>
-            </div>
-            <span class="text-[9px] ${a.is_active ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'} px-2 py-0.5 rounded-full border">${a.is_active ? 'فعال' : 'غیرفعال'}</span>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">علت مراجعه</div>
+        <div class="bi-sub">سهم هر علت</div>
+        <div class="funnel">
+          <div class="funnel-row"><div class="funnel-lbl">تعویض روغن</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:55%;background:linear-gradient(90deg,var(--gold2),var(--gold))">۵۵٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">روغن+واسکازین</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:25%;background:linear-gradient(90deg,#1d4ed8,var(--blue))">۲۵٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">واسکازین</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:12%;background:linear-gradient(90deg,#6d28d9,var(--violet))">۱۲٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">سر ریز روغن</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:5%;background:linear-gradient(90deg,#0d9488,var(--green))">۵٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">ضد یخ</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:3%;background:rgba(148,163,184,.5)">۳٪</div></div></div>
         </div>
-    `).join('');
-}
-
-async function loadDashboardStats() {
-    document.getElementById('stat-customers').innerText = allCustomers.length.toLocaleString('fa-IR');
-    document.getElementById('stat-cars').innerText = allCars.length.toLocaleString('fa-IR');
-
-    const { count: smsCount } = await sb.from('sms_logs').select('*', { count: 'exact', head: true });
-    document.getElementById('stat-sms').innerText = (smsCount || 0).toLocaleString('fa-IR');
-
-    const { data: recentServices, count } = await sb.from('official_services')
-        .select('*, cars(model, customer_id)', { count: 'exact' })
-        .order('created_at', { ascending: false }).limit(5);
-
-    document.getElementById('stat-services').innerText = (count || 0).toLocaleString('fa-IR');
-
-    const box = document.getElementById('dashboard-recent-services');
-    if (!recentServices || recentServices.length === 0) {
-        box.innerHTML = 'هنوز سرویسی ثبت نشده.';
-        return;
-    }
-    box.innerHTML = recentServices.map(s => `
-        <div class="flex items-center justify-between border-b border-slate-800/60 pb-2 last:border-0">
-            <span class="text-slate-300">${s.cars?.model || '—'}</span>
-            <span class="text-slate-500">${s.service_date} • ${Number(s.km_at_service).toLocaleString('fa-IR')} KM</span>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">وضعیت کلی روغن مشتریان</div>
+        <div class="bi-sub">توزیع وضعیت‌ها</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          <div class="prog"><div class="prog-row"><span>نرمال</span><span style="color:var(--green)">۴۸٪</span></div><div class="prog-track"><div class="prog-fill pf-green" style="width:48%"></div></div></div>
+          <div class="prog"><div class="prog-row"><span>سیاه و کارکرده</span><span style="color:var(--amber)">۲۹٪</span></div><div class="prog-track"><div class="prog-fill" style="width:29%;background:linear-gradient(90deg,#b45309,var(--amber))"></div></div></div>
+          <div class="prog"><div class="prog-row"><span>روغن‌سوزی محتمل</span><span style="color:var(--red)">۱۱٪</span></div><div class="prog-track"><div class="prog-fill pf-red" style="width:11%"></div></div></div>
+          <div class="prog"><div class="prog-row"><span>دارای ذرات/براده</span><span style="color:var(--violet)">۷٪</span></div><div class="prog-track"><div class="prog-fill pf-violet" style="width:7%"></div></div></div>
+          <div class="prog"><div class="prog-row"><span>سایر</span><span style="color:var(--text3)">۵٪</span></div><div class="prog-track"><div class="prog-fill" style="width:5%;background:rgba(148,163,184,.4)"></div></div></div>
         </div>
-    `).join('');
-}
+      </div>
+    </div>
+  </div>
 
-// ------------------------------------------------------------
-// مشتری و خودرو جدید
-// ------------------------------------------------------------
-function openCustomerModal() {
-    document.getElementById('new-customer-name').value = '';
-    document.getElementById('new-customer-phone').value = '';
-    document.getElementById('new-car-model').value = '';
-    document.getElementById('new-car-km').value = '';
-    document.getElementById('new-car-plate').value = '';
-    openModal('modal-customer');
-}
+  <!-- ====== CUSTOMERS ====== -->
+  <div class="page" id="page-customers">
+    <div class="ph">
+      <div><div class="ph-title">مشتریان</div><div class="ph-sub">بر اساس شیت «مشتریان»</div></div>
+      <button class="btn btn-gold" onclick="openModal('customer-modal')">➕ مشتری جدید</button>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--gold)">۹۶</div><div class="kpi-mini-lbl">مشتری طلایی</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val">۱۷۴</div><div class="kpi-mini-lbl">نقره‌ای</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val">۱۱۶</div><div class="kpi-mini-lbl">برنزی</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--green)">۳۸۶</div><div class="kpi-mini-lbl">کل مشتریان</div></div>
+    </div>
+    <div class="table-card">
+      <div class="filters"><button class="fb active">همه</button><button class="fb">طلایی</button><button class="fb">نقره‌ای</button><button class="fb">برنزی</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>شناسه مشتری</th><th>شماره موبایل</th><th>خودرو</th><th>جمع فاکتورها</th><th>تعداد مراجعات</th><th>کارکرد فعلی</th><th>تاریخ آخرین مراجعه</th><th>کیلومتر آخرین سرویس</th><th>علت آخرین سرویس</th><th>سطح مشتری</th><th>یادداشت</th><th>عملیات</th></tr></thead>
+          <tbody id="customers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
 
-async function saveCustomerAndCar(e) {
-    e.preventDefault();
-    const name = document.getElementById('new-customer-name').value.trim();
-    const phone = document.getElementById('new-customer-phone').value.trim();
-    const model = document.getElementById('new-car-model').value.trim();
-    const km = parseInt(document.getElementById('new-car-km').value);
-    const plate = document.getElementById('new-car-plate').value.trim();
-
-    const { data: customer, error: custErr } = await sb.from('customers')
-        .insert({ full_name: name, phone, created_by: currentAdmin.id }).select().single();
-
-    if (custErr) { showToast('خطا: ' + custErr.message, 'error'); return; }
-
-    const { error: carErr } = await sb.from('cars')
-        .insert({ customer_id: customer.id, model, current_km: km, plate_number: plate, created_by: currentAdmin.id });
-
-    if (carErr) { showToast('خطا: ' + carErr.message, 'error'); return; }
-
-    showToast('مشتری و خودرو با موفقیت ثبت شد ✓');
-    closeModal('modal-customer');
-    loadCustomersAndCars();
-    loadDashboardStats();
-}
-
-// ------------------------------------------------------------
-// جزئیات خودرو
-// ------------------------------------------------------------
-async function openCarDetail(carId) {
-    activeCarId = carId;
-    const car = allCars.find(c => c.id === carId);
-    const cust = allCustomers.find(c => c.id === car.customer_id);
-
-    document.getElementById('car-detail-title').innerHTML = `<i data-lucide="car" class="w-4 h-4 text-amber-500"></i> ${car.model} — ${cust?.full_name || ''}`;
-    document.getElementById('edit-car-km').value = car.current_km;
-    document.getElementById('edit-car-next-km').value = car.next_service_km || '';
-
-    const link = `${CUSTOMER_FILE_BASE_URL}/${car.access_token}`;
-    document.getElementById('car-detail-link').innerText = link;
-
-    document.getElementById('svc-date').value = '';
-    document.getElementById('svc-km').value = car.current_km;
-    document.getElementById('svc-reason').value = '';
-    document.getElementById('svc-oil').value = '';
-    document.getElementById('svc-gearbox').value = '';
-    document.getElementById('svc-parts').value = '';
-    document.getElementById('svc-summary').value = '';
-
-    openModal('modal-car-detail');
-    loadCarServiceHistory(carId);
-}
-
-function copyCarLink() {
-    const link = document.getElementById('car-detail-link').innerText;
-    navigator.clipboard.writeText(link);
-    showToast('لینک کپی شد ✓');
-}
-
-async function updateCarStats() {
-    const km = parseInt(document.getElementById('edit-car-km').value);
-    const nextKm = parseInt(document.getElementById('edit-car-next-km').value) || null;
-
-    const { error } = await sb.from('cars').update({ current_km: km, next_service_km: nextKm }).eq('id', activeCarId);
-    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
-    showToast('کیلومتر به‌روزرسانی شد ✓');
-    loadCustomersAndCars();
-}
-
-async function saveOfficialService(e) {
-    e.preventDefault();
-    const date = document.getElementById('svc-date').value.trim();
-    const km = parseInt(document.getElementById('svc-km').value);
-    const reason = document.getElementById('svc-reason').value.trim();
-    const oil = document.getElementById('svc-oil').value.trim();
-    const gearbox = document.getElementById('svc-gearbox').value.trim();
-    const partsRaw = document.getElementById('svc-parts').value.trim();
-    const summary = document.getElementById('svc-summary').value.trim();
-    const featured = document.getElementById('svc-featured').checked;
-
-    const partsDone = partsRaw ? partsRaw.split(',').map(p => ({ name: p.trim() })).filter(p => p.name) : [];
-
-    if (featured) {
-        // فقط یک سرویس می‌تواند ویژه باشد؛ بقیه را غیرویژه کن
-        await sb.from('official_services').update({ is_featured: false }).eq('car_id', activeCarId);
-    }
-
-    const { error } = await sb.from('official_services').insert({
-        car_id: activeCarId, service_date: date, km_at_service: km, reason,
-        oil_used: oil, gearbox_note: gearbox, parts_done: partsDone,
-        technical_summary: summary, is_featured: featured, created_by: currentAdmin.id
-    });
-
-    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
-
-    // به‌روزرسانی خودکار کیلومتر فعلی خودرو اگر سرویس جدیدتر بود
-    await sb.from('cars').update({ current_km: km, oil_used: oil }).eq('id', activeCarId).select();
-
-    showToast('سرویس با موفقیت ثبت شد ✓');
-    e.target.reset();
-    document.getElementById('svc-featured').checked = true;
-    loadCarServiceHistory(activeCarId);
-    loadCustomersAndCars();
-    loadDashboardStats();
-}
-
-async function loadCarServiceHistory(carId) {
-    const { data } = await sb.from('official_services').select('*').eq('car_id', carId).order('created_at', { ascending: false });
-    const box = document.getElementById('car-services-history');
-    if (!data || data.length === 0) {
-        box.innerHTML = '<p class="text-[11px] text-slate-500">هنوز سرویسی ثبت نشده.</p>';
-        return;
-    }
-    box.innerHTML = data.map(s => `
-        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-bold text-white">${s.reason || 'سرویس دوره‌ای'}</span>
-                <span class="text-[9px] text-amber-400">${s.service_date}</span>
-            </div>
-            <span class="text-[10px] text-slate-500">${Number(s.km_at_service).toLocaleString('fa-IR')} KM${s.is_featured ? ' • <span class="text-emerald-400">ویژه</span>' : ''}</span>
+    <div class="section-divider">📊 تحلیل مشتریان (Power BI)</div>
+    <div class="bi-grid">
+      <div class="bi-card">
+        <div class="bi-title">رشد مشتریان جدید</div>
+        <div class="bi-sub">۶ ماه اخیر</div>
+        <div class="bar-chart" style="height:80px">
+          <div class="bar-col"><div class="bar-body" style="height:40%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">مهر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:55%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">آبان</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:50%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">آذر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:65%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">دی</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:75%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">بهمن</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:100%;background:var(--blue-dim);border-top:2px solid var(--blue);border-radius:4px 4px 0 0"></div><div class="bar-lbl">اردی</div></div>
         </div>
-    `).join('');
-}
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">پرتکرارترین خودروها</div>
+        <div class="bi-sub">بر اساس تعداد مشتری</div>
+        <div class="funnel">
+          <div class="funnel-row"><div class="funnel-lbl">پراید</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:38%;background:linear-gradient(90deg,var(--gold2),var(--gold))">۳۸٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">پژو ۲۰۶</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:24%;background:linear-gradient(90deg,#1d4ed8,var(--blue))">۲۴٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">تیبا</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:18%;background:linear-gradient(90deg,#0d9488,var(--green))">۱۸٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">سمند</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:12%;background:linear-gradient(90deg,#6d28d9,var(--violet))">۱۲٪</div></div></div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">ارزش طول عمر مشتری (LTV)</div>
+        <div class="bi-sub">میانگین بر اساس سطح</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">طلایی</span><span style="font-size:13px;font-weight:700;color:var(--gold)">۳.۲ م</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">نقره‌ای</span><span style="font-size:13px;font-weight:700;color:#94a3b8">۱.۵ م</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--text2)">برنزی</span><span style="font-size:13px;font-weight:700;color:#b48c64">۶۵۰ ه</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// ------------------------------------------------------------
-// ارسال پیامک لینک پرونده
-// ------------------------------------------------------------
-async function sendCarLinkSms() {
-    const btn = document.getElementById('btn-send-sms');
-    const car = allCars.find(c => c.id === activeCarId);
-    const cust = allCustomers.find(c => c.id === car.customer_id);
-    const link = `${CUSTOMER_FILE_BASE_URL}/${car.access_token}`;
+  <!-- ====== SIGNUPS (ثبت‌نامی‌های خودکار مشتری از سایت) ====== -->
+  <div class="page" id="page-signups">
+    <div class="ph"><h2>ثبت‌نامی‌های جدید (از سایت)</h2></div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:12px">این افراد از طریق دکمه «ثبت‌نام» در سایت، خودشان با تایید شماره موبایل پرونده ساخته‌اند — هنوز مشتری حضوری اتوسرویس نبوده‌اند.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>تاریخ ثبت‌نام</th><th>نام</th><th>موبایل</th><th>خودرو</th><th>عملیات</th></tr></thead>
+        <tbody id="signups-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-ring"></span>';
+  <!-- ====== INVOICE ====== -->
+  <div class="page" id="page-invoice">
+    <div class="ph">
+      <div><div class="ph-title">ریز اقلام فاکتور</div><div class="ph-sub">بر اساس شیت «ریز اقلام فاکتور»</div></div>
+      <button class="btn btn-gold" onclick="openModal('lineitem-modal')">➕ ثبت قلم جدید</button>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--green)">۴۸.۲ م</div><div class="kpi-mini-lbl">جمع فروش</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val">۳۵.۶ م</div><div class="kpi-mini-lbl">جمع خرید</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--gold)">۱۲.۶ م</div><div class="kpi-mini-lbl">سود کل</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--violet)">۲۶٪</div><div class="kpi-mini-lbl">حاشیه سود</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><span class="table-htitle">ریز اقلام</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>شناسه ردیف</th><th>شناسه فاکتور</th><th>موبایل</th><th>کد محصول</th><th>نام محصول</th><th>تعداد</th><th>قیمت خرید</th><th>قیمت فروش</th><th>جمع خرید</th><th>جمع فروش</th><th>سود قلم</th></tr></thead>
+          <tbody id="invoice-tbody">
 
-    try {
-        const { data: { session } } = await sb.auth.getSession();
-        const res = await fetch(SMS_EDGE_FUNCTION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({ phone: cust.phone, carId: car.id, link, customerName: cust.full_name })
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'خطای ارسال پیامک');
-        showToast('پیامک با موفقیت ارسال شد ✓');
-    } catch (err) {
-        showToast('خطا در ارسال پیامک: ' + err.message, 'error');
-    }
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    btn.disabled = false;
-    btn.innerHTML = '<i data-lucide="send" class="w-3.5 h-3.5"></i> ارسال لینک پرونده به مشتری (پیامک)';
-    lucide.createIcons();
-}
+    <div class="section-divider">📊 تحلیل ریز فاکتورها (Power BI)</div>
+    <div class="bi-grid">
+      <div class="bi-card">
+        <div class="bi-title">روند سود ماهانه</div>
+        <div class="bi-sub">هزار تومان</div>
+        <div class="bar-chart" style="height:80px">
+          <div class="bar-col"><div class="bar-body" style="height:50%;background:var(--green-dim);border-top:2px solid var(--green);border-radius:4px 4px 0 0"></div><div class="bar-lbl">مهر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:60%;background:var(--green-dim);border-top:2px solid var(--green);border-radius:4px 4px 0 0"></div><div class="bar-lbl">آبان</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:45%;background:var(--green-dim);border-top:2px solid var(--green);border-radius:4px 4px 0 0"></div><div class="bar-lbl">آذر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:40%;background:rgba(52,211,153,.1);border-top:1px dashed rgba(52,211,153,.3);border-radius:4px 4px 0 0"></div><div class="bar-lbl">دی</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:75%;background:var(--green-dim);border-top:2px solid var(--green);border-radius:4px 4px 0 0"></div><div class="bar-lbl">بهمن</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:100%;background:var(--green-dim);border-top:2px solid var(--green);border-radius:4px 4px 0 0"></div><div class="bar-lbl" style="color:var(--green)">اردی</div></div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">پرفروش‌ترین اقلام</div>
+        <div class="bi-sub">بر اساس تعداد فروش</div>
+        <div class="funnel">
+          <div class="funnel-row"><div class="funnel-lbl">15W40 ایرانول</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:80%;background:linear-gradient(90deg,var(--gold2),var(--gold))">۸۰٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">فیلتر روغن</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:65%;background:linear-gradient(90deg,#0d9488,var(--green))">۶۵٪</div></div></div>
+          <div class="funnel-row"><div class="funnel-lbl">5W30 کاسترول</div><div class="funnel-bar-wrap"><div class="funnel-fill" style="width:48%;background:linear-gradient(90deg,#1d4ed8,var(--blue))">۴۸٪</div></div></div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">حاشیه سود محصولات</div>
+        <div class="bi-sub">میانگین درصد سود</div>
+        <div class="donut-wrap">
+          <svg width="70" height="70" viewBox="0 0 70 70">
+            <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="10"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="var(--green)" stroke-width="10" stroke-dasharray="48 128" stroke-linecap="round" transform="rotate(-90 35 35)"/>
+            <text x="35" y="39" text-anchor="middle" font-size="11" fill="var(--green)" font-weight="700" font-family="Vazirmatn">۲۶٪</text>
+          </svg>
+          <div style="font-size:9px;color:var(--text3);line-height:1.6">حاشیه سود کل<br/>بر اساس تمام ردیف‌های فاکتور این ماه</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// ------------------------------------------------------------
-// کاتالوگ قطعات
-// ------------------------------------------------------------
-function openPartModal() {
-    document.getElementById('part-name').value = '';
-    document.getElementById('part-interval').value = '';
-    openModal('modal-part');
-}
+  <!-- ====== PRODUCTS ====== -->
+  <div class="page" id="page-products">
+    <div class="ph">
+      <div><div class="ph-title">محصولات</div><div class="ph-sub">بر اساس شیت «محصولات»</div></div>
+      <button class="btn btn-gold" onclick="openModal('product-modal')">➕ محصول جدید</button>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-mini"><div class="kpi-mini-val">۴۲</div><div class="kpi-mini-lbl">کل محصولات</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--red)">۳</div><div class="kpi-mini-lbl">ناموجود</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--amber)">۵</div><div class="kpi-mini-lbl">موجودی کم</div></div>
+      <div class="kpi-mini"><div class="kpi-mini-val" style="color:var(--green)">۲۶٪</div><div class="kpi-mini-lbl">میانگین حاشیه سود</div></div>
+    </div>
+    <div class="table-card" style="margin-bottom:16px">
+      <div class="table-header"><span class="table-htitle">لیست محصولات</span>
+        <div class="filters" style="padding:0;border:none"><button class="fb active">همه</button><button class="fb">روغن</button><button class="fb">فیلتر</button><button class="fb">گیربکس</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>شناسه محصول</th><th>دسته‌بندی</th><th>نام محصول</th><th>برند</th><th>مدل/مشخصه<span class="api-only">SAE</span></th><th>قیمت خرید</th><th>قیمت فروش</th><th>حاشیه سود</th><th>موجودی</th><th>عملیات</th></tr></thead>
+          <tbody id="products-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-async function savePart(e) {
-    e.preventDefault();
-    const category = document.getElementById('part-cat').value;
-    const part_name = document.getElementById('part-name').value.trim();
-    const default_interval_km = parseInt(document.getElementById('part-interval').value);
-
-    const { error } = await sb.from('parts_catalog').insert({ category, part_name, default_interval_km });
-    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
-
-    showToast('قطعه اضافه شد ✓');
-    closeModal('modal-part');
-    loadParts();
-}
-
-async function deletePart(id) {
-    if (!confirm('حذف این قطعه از کاتالوگ؟')) return;
-    const { error } = await sb.from('parts_catalog').delete().eq('id', id);
-    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
-    showToast('قطعه حذف شد');
-    loadParts();
-}
-
-// ------------------------------------------------------------
-// کاربران ادمین
-// ------------------------------------------------------------
-function openAdminModal() {
-    if (currentAdmin.role !== 'owner') { showToast('فقط مالک می‌تواند ادمین اضافه کند.', 'error'); return; }
-    document.getElementById('admin-uuid').value = '';
-    document.getElementById('admin-name').value = '';
-    openModal('modal-admin');
-}
-
-async function saveAdmin(e) {
-    e.preventDefault();
-    const id = document.getElementById('admin-uuid').value.trim();
-    const full_name = document.getElementById('admin-name').value.trim();
-    const role = document.getElementById('admin-role').value;
-
-    const { error } = await sb.from('admin_profiles').insert({ id, full_name, role });
-    if (error) { showToast('خطا: ' + error.message, 'error'); return; }
-
-    showToast('ادمین جدید اضافه شد ✓');
-    closeModal('modal-admin');
-    loadAdmins();
-}
-
-// ------------------------------------------------------------
-// شروع برنامه
-// ------------------------------------------------------------
-(async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        await loadCurrentAdmin();
-    } else {
-        showLoginView();
-    }
-})();
-</script>
-</body>
-</html>
+    <div class="section-divider">📊 تحلیل محصولات (Power BI)</div>
+    <div class="bi-grid">
+      <div class="bi-card">
+        <div class="bi-title">موجودی بر اساس دسته</div>
+        <div class="bi-sub">تعداد قلم</div>
+        <div class="bar-chart" style="height:80px">
+          <div class="bar-col"><div class="bar-body" style="height:60%;background:linear-gradient(0deg,var(--gold2),var(--gold));border-radius:4px 4px 0 0"></div><div class="bar-lbl">روغن</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:90%;background:linear-gradient(0deg,#1d4ed8,var(--blue));border-radius:4px 4px 0 0"></div><div class="bar-lbl">فیلتر</div></div>
+          <div class="bar-col"><div class="bar-body" style="height:25%;background:linear-gradient(0deg,#6d28d9,var(--violet));border-radius:4px 4px 0 0"></div><div class="bar-lbl">گیربکس</div></div>
+        </div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">پرسودترین محصولات</div>
+        <div class="bi-sub">بر اساس حاشیه سود٪</div>
+        <div 
