@@ -1,1 +1,1756 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اتو سرویس کومه | پرونده هوشمند خودرو</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #030508;
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(7, 11, 20, 0.9) 100%);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(212, 165, 116, 0.18);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(212, 165, 116, 0.4);
+            box-shadow: 0 30px 70px rgba(212, 165, 116, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 12px rgba(245, 158, 11, 0.6); }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 24px rgba(245, 158, 11, 0.9); }
+        }
+        .glow-dot-amber { animation: pulse-glow 2.5s infinite; }
+
+        @keyframes pulse-glow-green {
+            0%, 100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 24px rgba(16, 185, 129, 0.9); }
+        }
+        .glow-dot-emerald { animation: pulse-glow-green 2s infinite; }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .timeline-line {
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.5) 0%, rgba(245, 158, 11, 0.1) 85%, transparent 100%);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .accordion-content.open {
+            max-height: 350px;
+            opacity: 1;
+        }
+
+        .spinner-ring {
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-left-color: #8b5cf6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* استایل سفارشی‌سازی تقویم فارسی برای تم تاریک شیک */
+        .datepicker-plot-area {
+            background-color: #090d16 !important;
+            border: 1px solid rgba(245, 158, 11, 0.3) !important;
+            border-radius: 1rem !important;
+            font-family: 'Vazirmatn', sans-serif !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
+            z-index: 100000 !important;
+        }
+        .datepicker-plot-area .datepicker-header {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .datepicker-plot-area .datepicker-day-view .table-days td span {
+            color: #cbd5e1 !important;
+            border-radius: 0.5rem !important;
+        }
+        .datepicker-plot-area .datepicker-day-view .table-days td.selected span {
+            background-color: #f59e0b !important;
+            color: #0f172a !important;
+            font-weight: bold !important;
+        }
+        .datepicker-plot-area .datepicker-navigator .pdate-next,
+        .datepicker-plot-area .datepicker-navigator .pdate-prev,
+        .datepicker-plot-area .datepicker-navigator .pdate-title {
+            color: #f59e0b !important;
+        }
+
+        [data-force-hidden="true"] { display: none !important; }
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(2,4,8,0.82); backdrop-filter: blur(10px); z-index: 60; align-items: center; justify-content: center; padding: 1rem; }
+
+        /* ===== تقویم شمسی اختصاصی ===== */
+        .cal-day { aspect-ratio: 1/1; display:flex; align-items:center; justify-content:center; border-radius: 0.7rem; font-size: 11px; font-weight: 600; color:#cbd5e1; cursor:pointer; transition: all .15s ease; position:relative; }
+        .cal-day:hover { background: rgba(245,158,11,0.12); }
+        .cal-day.today { color:#f59e0b; font-weight:900; }
+        .cal-day.today::after { content:''; position:absolute; bottom:3px; width:4px; height:4px; border-radius:50%; background:#f59e0b; }
+        .cal-day.selected { background: linear-gradient(135deg,#f59e0b,#d97706); color:#0f172a; font-weight:900; box-shadow: 0 4px 14px rgba(245,158,11,0.4); }
+        .cal-day.empty { visibility:hidden; }
+        .cal-nav-btn { width:30px; height:30px; border-radius:0.65rem; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; color:#f59e0b; transition: all .15s; }
+        .cal-nav-btn:active { transform: scale(0.9); background: rgba(245,158,11,0.15); }
+
+        /* ===== دراپ‌داون سفارشی وضعیت قطعه ===== */
+        .status-option { display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:0.85rem; cursor:pointer; transition: all .15s ease; border:1px solid transparent; }
+        .status-option:hover { background: rgba(255,255,255,0.04); }
+        .status-option.active { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.35); }
+        .status-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow: 0 0 8px currentColor; }
+
+        /* ===== انتخابگر ساعت اسکرولی ===== */
+        .time-wheel { height: 220px; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -ms-overflow-style: none; position: relative; }
+        .time-wheel::-webkit-scrollbar { display: none; }
+        .time-wheel-item { height: 44px; display:flex; align-items:center; justify-content:center; scroll-snap-align: center; font-weight:700; color:#64748b; font-size: 15px; transition: all .15s ease; }
+        .time-wheel-item.active-time { color:#f59e0b; font-size: 19px; transform: scale(1.08); }
+        .time-wheel-frame { position:absolute; top:50%; left:0; right:0; height:44px; transform: translateY(-50%); border-top:1px solid rgba(245,158,11,0.35); border-bottom:1px solid rgba(245,158,11,0.35); background: linear-gradient(90deg, rgba(245,158,11,0.06), rgba(245,158,11,0.02)); pointer-events:none; border-radius: 0.6rem; }
+        .time-wheel-fade-top, .time-wheel-fade-bottom { position:absolute; left:0; right:0; height:70px; pointer-events:none; z-index:2; }
+        .time-wheel-fade-top { top:0; background: linear-gradient(180deg, #0f172a 15%, transparent); }
+        .time-wheel-fade-bottom { bottom:0; background: linear-gradient(0deg, #0f172a 15%, transparent); }
+        .survey-star.active { color: #f59e0b !important; text-shadow: 0 0 12px rgba(245,158,11,0.6); transform: scale(1.15); }
+        .survey-star { cursor: pointer; }
+    </style>
+
+    <style>
+        /* حذف استایل قدیمی تقویم جی‌کوئری که دیگر استفاده نمی‌شود */
+    </style>
+</head>
+<body class="text-slate-100 antialiased selection:bg-amber-500/30 pb-28">
+
+    <!-- منوی بالایی -->
+    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/85 backdrop-blur-md border-b border-white/5 py-3.5 px-6">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30 shadow-inner">
+                    <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-black tracking-wider text-white">اتو سرویس کومه</span>
+                    <span class="text-[8px] text-amber-500/70 tracking-widest font-bold">SMART CAR CARE</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- دکمه ورود با شماره (برای مشتریانی که لینکشون رو گم کردن) -->
+                <button id="nav-login-btn" onclick="openLoginModal()" class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                    <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                    <span>ورود</span>
+                </button>
+
+                <!-- دکمه ثبت‌نام -->
+                <button id="nav-signup-btn" onclick="openSignupModal()" class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                    <span>ثبت‌نام</span>
+                </button>
+
+                <!-- دکمه سوئیچ خودرو -->
+                <button id="nav-switch-car-btn" onclick="switchCarModal()" data-force-hidden="true" class="flex items-center gap-1.5 bg-slate-900 border border-amber-500/30 text-amber-400 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                    <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                    <span>سوئیچ خودرو</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- تصویر پس‌زمینه -->
+    <div id="hero-bg-container" class="fixed inset-0 w-full h-full z-10 pointer-events-none overflow-hidden" style="transform:translateZ(0); backface-visibility:hidden;">
+        <div class="absolute inset-0 bg-gradient-to-b from-[#030508]/90 via-[#030508]/35 to-[#030508]/95 z-20"></div>
+        <img id="hero-bg-image"
+             src="https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=1200&q=80"
+             alt="[تصویر خودرو اسپرت مشکی]"
+             class="w-full h-full object-cover opacity-45"
+             style="will-change: transform, filter; transform: translateZ(0) scale(1); backface-visibility:hidden;">
+    </div>
+
+    <!-- ==================== صفحه اصلی (پرونده هوشمند) ==================== -->
+    <div id="tab-main" class="tab-content active relative z-20 w-full max-w-md mx-auto px-4 pt-20">
+
+        <!-- بخش معرفی -->
+        <section id="scene-intro" class="min-h-[80vh] flex flex-col justify-center items-center text-center py-10">
+            <span class="text-[10px] uppercase tracking-widest text-amber-500/80 font-bold mb-3 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                سامانه هوشمند و پرونده سلامت خودرو
+            </span>
+            <h2 class="text-3xl font-black text-white leading-tight mb-4">
+                اتو سرویس کومه<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200 text-xl font-bold">اصالت در خدمات، هوشمندی در مدیریت</span>
+            </h2>
+            <p class="text-xs text-slate-400 max-w-xs leading-relaxed mb-10">
+                سوابق سرویس‌های دوره‌ای، سلامت قطعات و دفترچه نگهداری خودروی شما در یکجا.
+            </p>
+            <div id="scroll-hint" class="flex flex-col items-center gap-2 animate-bounce">
+                <span class="text-[10px] text-slate-500">مشاهده پرونده (اسکرول کنید)</span>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-amber-500/60"></i>
+            </div>
+
+            <!-- باکس ویژه بازدید عمومی -->
+            <div id="public-visitor-cta" data-force-hidden="true" class="glass-card rounded-2xl p-5 mt-8 max-w-xs">
+                <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                    اگر قبلاً برای خودروی شما در اتوسرویس کومه سرویس ثبت شده است، لینک اختصاصی پرونده‌تان از طریق پیامک برایتان ارسال می‌شود.
+                </p>
+                <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                    اگر بار اول است یا می‌خواهید فقط از دفترچه شخصی نگهداری استفاده کنید، ابتدا ثبت‌نام کنید:
+                </p>
+                <button onclick="openSignupModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    ثبت‌نام و ساخت پرونده شخصی
+                </button>
+            </div>
+        </section>
+
+        <!-- بخش اول: اطلاعات و مسافت‌شمار -->
+        <section id="scene-stats" class="min-h-[60vh] flex flex-col justify-center py-10">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-amber-500/80 font-bold tracking-widest uppercase">بخش اول</span>
+                <h3 class="text-lg font-black text-white">پرونده هویت و کیلومتر</h3>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28 relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-medium">خودرو</span>
+                        <button onclick="switchCarModal()" title="تعویض خودرو" id="stat-switch-btn" data-force-hidden="true" class="text-amber-500 hover:text-white transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <span id="car-model" class="text-xs font-black text-white block truncate">پژو 207 i</span>
+                        <span class="text-[8px] text-amber-500/80">پرونده اختصاصی شما</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-medium">کیلومتر فعلی</span>
+                        <i data-lucide="gauge" class="w-3.5 h-3.5 text-amber-500/70"></i>
+                    </div>
+                    <div>
+                        <span id="current-km" class="text-sm font-black text-white">124,500</span>
+                        <span class="text-[9px] text-slate-400 mr-0.5">KM</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-3.5 flex flex-col justify-between h-28">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] text-slate-400 font-medium">سرویس بعدی</span>
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-500/70"></i>
+                    </div>
+                    <div>
+                        <span id="next-service-km" class="text-sm font-black text-amber-500">130,000</span>
+                        <span class="text-[9px] text-amber-500/80 mr-0.5">KM</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- بخش دوم: تحلیل هوش مصنوعی -->
+        <section id="scene-ai" class="min-h-screen flex flex-col justify-center py-12">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-violet-400 font-bold tracking-widest uppercase">بخش دوم</span>
+                <h3 class="text-lg font-black text-white">تحلیل سلامت هوشمند AI</h3>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 mb-4">
+                <div class="flex items-center justify-between bg-slate-950/40 border border-slate-800 p-3.5 rounded-xl mb-4">
+                    <span class="text-xs font-medium text-slate-300">وضعیت عمومی خودرو:</span>
+                    <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 glow-dot-emerald"></span>
+                        <span id="car-status-text" class="text-[10px] font-bold text-emerald-400">عالی و آماده سفر</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <span class="text-slate-400">سلامت تخمینی روغن موتور</span>
+                        <span id="oil-efficiency-percent" class="font-bold text-amber-500">75٪ سلامت</span>
+                    </div>
+                    <div class="w-full bg-slate-950/80 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                        <div id="oil-efficiency-bar" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-1000" style="width: 75%"></div>
+                    </div>
+                </div>
+
+                <button id="btn-generate-ai" onclick="generateAIReport()" class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.01] active:scale-95">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>تحلیل وضعیت خودرو با هوش مصنوعی</span>
+                </button>
+
+                <p class="text-[10px] text-amber-400/90 text-center mt-2 font-medium flex items-center justify-center gap-1">
+                    <i data-lucide="wifi-off" class="w-3 h-3"></i>
+                    در صورت متصل نشدن AI از VPN استفاده کنید
+                </p>
+
+                <div id="ai-report-box" class="mt-4 bg-slate-950/60 border border-violet-500/20 rounded-xl p-4 hidden">
+                    <div class="flex items-center gap-2 mb-2 text-violet-400 font-bold text-xs">
+                        <i data-lucide="brain-circuit" class="w-4.5 h-4.5"></i>
+                        گزارش تخصصی اوستاکار👨🏻‍🔧 (اتوسرویس کومه)
+                    </div>
+                    <p id="ai-report-text" class="text-xs text-slate-300 leading-relaxed text-justify whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-violet-500/10">
+                <h4 class="text-xs text-slate-400 font-bold mb-3 flex items-center gap-1.5 border-b border-slate-800 pb-3">
+                    <i data-lucide="message-square" class="w-4 h-4 text-violet-400"></i>
+                    دستیار عیب‌یاب هوشمند اوستاکار👨🏻‍🔧
+                </h4>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                    <button onclick="quickAsk('علت صدای تق تق زیر پا موقع ترمز چیه؟')" class="bg-slate-950/80 border border-slate-800 text-[9px] text-slate-300 px-2.5 py-1.5 rounded-lg hover:border-violet-500/50 transition-colors">صدای تق تق ترمز</button>
+                    <button onclick="quickAsk('چرا موتور ماشین لرزش عجیبی توی سلو داره؟')" class="bg-slate-950/80 border border-slate-800 text-[9px] text-slate-300 px-2.5 py-1.5 rounded-lg hover:border-violet-500/50 transition-colors">لرزش موتور</button>
+                </div>
+
+                <div class="flex gap-2">
+                    <input id="ai-chat-input" type="text" placeholder="مشکل خودرو را بنویسید..." class="flex-1 bg-slate-950/90 border border-slate-800 text-xs rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500">
+                    <button id="btn-ask-ai" onclick="askAIOvesta()" class="bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 rounded-xl text-xs transition-colors active:scale-95">بپرس ✨</button>
+                </div>
+
+                <p class="text-[10px] text-amber-400/90 text-center mt-2 font-medium flex items-center justify-center gap-1">
+                    <i data-lucide="wifi-off" class="w-3 h-3"></i>
+                    در صورت متصل نشدن AI از VPN استفاده کنید
+                </p>
+
+                <div id="ai-chat-response-box" class="mt-4 bg-slate-950/60 border border-slate-800 rounded-xl p-4 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-violet-400 font-bold flex items-center gap-1.5"><i data-lucide="user-cog" class="w-4 h-4"></i>پاسخ اوستاکار👨🏻‍🔧:</span>
+                        <button onclick="clearChat()" class="text-[9px] text-slate-500 hover:text-slate-300 flex items-center gap-0.5"><i data-lucide="refresh-cw" class="w-3 h-3"></i> پاک کردن</button>
+                    </div>
+                    <p id="ai-chat-response" class="text-xs text-slate-300 leading-relaxed text-justify whitespace-pre-line"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== بخش سوم: سوابق رسمی اتوسرویس کومه ==================== -->
+        <section id="scene-history" class="min-h-screen flex flex-col justify-center py-12">
+
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full mb-2">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span class="text-[9px] font-black text-amber-400 uppercase tracking-widest">تایید شده توسط مدیریت</span>
+                </div>
+                <h3 class="text-xl font-black text-white tracking-tight">سوابق رسمی اتوسرویس کومه</h3>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                    تایم‌لاین پرونده رسمی خدمات و سرویس‌های دوره‌ای ثبت شده در مجموعه
+                </p>
+            </div>
+
+            <!-- کارت آخرین سرویس ویژه -->
+            <div id="featured-service-container" class="mb-8">
+                <div class="glass-card rounded-3xl p-5 border-amber-500/30 relative overflow-hidden shadow-2xl">
+                    <div class="absolute top-0 left-0 w-28 h-28 bg-amber-500/10 rounded-full filter blur-2xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 glow-dot-emerald"></span>
+                            <span class="text-xs font-black text-white">آخرین سرویس ثبت‌شده</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i> 1403/05/10
+                        </span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800/60">
+                            <div class="flex items-center gap-2 text-slate-300 text-xs"><i data-lucide="droplet" class="w-4 h-4 text-amber-500"></i><span>روغن موتور:</span></div>
+                            <span class="text-xs font-black text-white">لیکومولی 5W30 سوپر پلاس</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span class="text-[10px] text-slate-400 font-bold block mb-1">وضعیت دقیق فیلترها و مصرفی‌ها:</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-slate-900/90 border border-emerald-500/30 p-2 rounded-xl flex items-center justify-between">
+                                    <span class="text-[10px] text-slate-300">فیلتر روغن</span>
+                                    <span class="text-[9px] font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> تعویض شد</span>
+                                </div>
+                                <div class="bg-slate-900/90 border border-emerald-500/30 p-2 rounded-xl flex items-center justify-between">
+                                    <span class="text-[10px] text-slate-300">فیلتر هوا</span>
+                                    <span class="text-[9px] font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> تعویض شد</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تایم‌لاین سوابق قبلی -->
+            <div id="prev-oil-section" class="mb-3">
+                <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-3">
+                    <i data-lucide="list" class="w-3.5 h-3.5 text-amber-500"></i>
+                    جدول سوابق قبلی تعویض روغن
+                </h4>
+            </div>
+            <div class="relative pl-0 pr-6 mr-1">
+                <div class="absolute top-2 right-2.5 bottom-6 w-0.5 timeline-line rounded-full"></div>
+                <div id="timeline-cards-container" class="space-y-2"></div>
+            </div>
+
+            <footer class="text-center mt-12 space-y-2">
+                <p class="text-[9px] text-slate-600">پلتفرم مدیریت یکپارچه و هوشمند کومه</p>
+                <p class="text-[9px] text-slate-500 max-w-[220px] mx-auto leading-relaxed flex items-center justify-center gap-1">
+                    <i data-lucide="smartphone" class="w-3 h-3 text-amber-500/70 shrink-0"></i>
+                    برای دسترسی سریع‌تر، از منوی مرورگر (⋮) گزینه «افزودن به صفحه اصلی» (Add to Home Screen) را انتخاب کنید.
+                </p>
+            </footer>
+        </section>
+    </div>
+
+    <!-- ==================== صفحه مجزای دفترچه شخصی ==================== -->
+    <div id="tab-notebook" class="tab-content relative z-20 w-full max-w-md mx-auto px-4 pt-20">
+        <section class="py-6">
+            <div class="text-center mb-6">
+                <span class="text-[9px] text-amber-500/80 font-bold tracking-widest uppercase bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                    صفحه اختصاصی مالک خودرو
+                </span>
+                <h3 class="text-xl font-black text-white flex items-center justify-center gap-2 mt-3">
+                    <i data-lucide="book-open" class="w-5 h-5 text-amber-500"></i>
+                    دفترچه شخصی نگهداری خودرو
+                </h3>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto">
+                    اطلاعات این صفحه فقط برای شماست و جزو سوابق رسمی اتوسرویس کومه نیست.
+                </p>
+            </div>
+
+            <!-- فرم ثبت سرویس شخصی -->
+            <div class="glass-card rounded-2xl p-5 mb-5 border-amber-500/30">
+                <h4 class="text-xs font-bold text-amber-400 mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-2.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    ثبت سرویس / قطعه جدید
+                </h4>
+
+                <div id="personal-error-msg" class="hidden mb-3 bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <span id="personal-error-text"></span>
+                </div>
+
+                <form id="personal-service-form" onsubmit="savePersonalService(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">نام قطعه یا سرویس *</label>
+                        <input id="personal-part-name" type="text" required placeholder="مثلاً: تعویض لنت ترمز جلو، تسمه تایم، شمع..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="relative">
+                            <label class="block text-[10px] text-slate-400 mb-1">تاریخ (تقویم شمسی) *</label>
+                            <input id="personal-date" type="text" readonly onclick="openCalendar('personal-date')" placeholder="انتخاب از تقویم..." required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-amber-400 cursor-pointer focus:border-amber-500 focus:outline-none font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی *</label>
+                            <input id="personal-km" type="number" placeholder="124500" required class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-500/5 p-3 rounded-xl border border-amber-500/20">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                                کیلومتر تعویض بعدی *
+                            </label>
+                        </div>
+                        <input id="personal-next-km" type="number" required placeholder="مثلاً: ۱۶۴۰۰۰" class="w-full bg-slate-950 border border-amber-500/40 text-xs rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none placeholder-slate-600 font-bold">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="relative">
+                            <label class="block text-[10px] text-slate-400 mb-1">وضعیت قطعه *</label>
+                            <input type="hidden" id="personal-status" value="🟢 تعویض شد">
+                            <button type="button" onclick="toggleStatusDropdown()" id="status-trigger" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none flex items-center justify-between">
+                                <span id="status-trigger-label" class="flex items-center gap-2">
+                                    <span class="status-dot" style="background:#10b981;color:#10b981"></span>
+                                    تعویض شد
+                                </span>
+                                <i data-lucide="chevron-down" id="status-chevron" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-200"></i>
+                            </button>
+                            <div id="status-panel" class="hidden absolute z-30 top-full mt-1.5 w-full glass-card rounded-xl p-1.5 space-y-0.5">
+                                <div class="status-option active" data-value="🟢 تعویض شد" onclick="selectStatus(this)">
+                                    <span class="status-dot" style="background:#10b981;color:#10b981"></span>
+                                    <span class="text-xs text-slate-200 font-medium">تعویض شد</span>
+                                </div>
+                                <div class="status-option" data-value="🟡 نیاز به تعویض در آینده" onclick="selectStatus(this)">
+                                    <span class="status-dot" style="background:#f59e0b;color:#f59e0b"></span>
+                                    <span class="text-xs text-slate-200 font-medium">نیاز به تعویض در آینده</span>
+                                </div>
+                                <div class="status-option" data-value="🟢 سالم و بازبینی شده" onclick="selectStatus(this)">
+                                    <span class="status-dot" style="background:#10b981;color:#10b981"></span>
+                                    <span class="text-xs text-slate-200 font-medium">سالم و بازبینی شده</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">هزینه (تومان - اختیاری)</label>
+                            <input id="personal-cost" type="number" placeholder="مثلاً: 2500000" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">توضیحات (اختیاری)</label>
+                        <input id="personal-notes" type="text" placeholder="مثلاً: برند اصلی - خریداری شده از نمایندگی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    </div>
+
+                    <button id="btn-save-personal" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        ثبت در دفترچه شخصی
+                    </button>
+                </form>
+            </div>
+
+            <!-- تاریخچه دفترچه شخصی -->
+            <div class="glass-card rounded-2xl p-4 overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <i data-lucide="history" class="w-4 h-4 text-amber-500"></i>
+                        تاریخچه ثبت شده توسط شما
+                    </h4>
+                    <span id="personal-count-badge" class="text-[9px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">۰ مورد</span>
+                </div>
+                <div id="personal-history-container" class="space-y-2.5"></div>
+            </div>
+
+            <footer class="text-center mt-10"><p class="text-[9px] text-slate-600">دفترچه نگهداری شخصی خودرو - کومه</p></footer>
+        </section>
+    </div>
+
+    <!-- نوار ابزار متحرک و شناور پایین صفحه -->
+    <div class="fixed bottom-4 inset-x-3 z-40 max-w-md mx-auto">
+        <div class="glass-card rounded-2xl p-2 border-amber-500/30 flex items-center justify-between shadow-2xl backdrop-blur-xl bg-[#0a0e17]/95">
+
+            <button id="nav-btn-main" onclick="switchTab('main')" class="flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors">
+                <i data-lucide="home" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">اصلی</span>
+            </button>
+
+            <button id="nav-btn-notebook" onclick="switchTab('notebook')" class="flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors relative">
+                <i data-lucide="book-open" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">دفترچه شخصی</span>
+            </button>
+
+            <button onclick="openBookingModal()" class="bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition-transform mx-1">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                <span class="text-[11px]">رزرو نوبت</span>
+            </button>
+
+            <button onclick="openModal('contact-modal')" class="flex flex-col items-center justify-center py-1.5 px-2 text-slate-400 hover:text-amber-400 transition-colors">
+                <i data-lucide="phone-call" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">تماس</span>
+            </button>
+
+            <button onclick="openModal('navigation-modal')" class="flex flex-col items-center justify-center py-1.5 px-2 text-slate-400 hover:text-amber-400 transition-colors">
+                <i data-lucide="map-pin" class="w-4 h-4 mb-1"></i>
+                <span class="text-[9px] font-bold">مسیریابی</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- مدال کامل رزرو نوبت آنلاین + ارسال مستقیم به پنل ادمین -->
+    <div id="booking-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="calendar-plus" class="w-4 h-4 text-amber-500"></i>
+                    رزرو آنلاین نوبت سرویس
+                </h4>
+                <button onclick="closeModal('booking-modal')" class="text-slate-500 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="booking-msg-box" class="hidden text-[11px] p-3 rounded-xl"></div>
+
+            <form id="booking-form" onsubmit="submitBookingForm(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">نام و نام خانوادگی *</label>
+                    <input id="booking-name" required placeholder="مثلاً: علی محمدی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">شماره تماس جهت هماهنگی *</label>
+                    <input id="booking-phone" type="tel" required placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">مدل و نوع خودرو *</label>
+                    <input id="booking-car" required placeholder="مثلاً: پژو 206 تیپ 5" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="relative">
+                        <label class="block text-[10px] text-slate-400 mb-1">تاریخ پیشنهادی *</label>
+                        <input id="booking-date" readonly required onclick="openCalendar('booking-date')" placeholder="انتخاب از تقویم..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-amber-400 cursor-pointer focus:border-amber-500 focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">ساعت پیشنهادی *</label>
+                        <button type="button" onclick="openTimePicker()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none flex items-center justify-between">
+                            <span id="booking-time-label" class="text-slate-500">انتخاب ساعت...</span>
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
+                        </button>
+                        <input type="hidden" id="booking-time">
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-amber-400/80 bg-amber-500/5 border border-amber-500/10 p-2 rounded-xl flex items-center gap-1.5">
+                    <i data-lucide="clock-4" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>ساعات کاری اتوسرویس کومه: از ۸:۰۰ صبح تا ۲۰:۰۰</span>
+                </p>
+
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">توضیحات و نوع سرویس مدنظر</label>
+                    <textarea id="booking-notes" rows="2" placeholder="مثلاً: تعویض روغن موتور و فیلترها..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <button id="btn-submit-booking" type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    ارسال رزرو نوبت به پنل مدیریت
+                </button>
+            </form>
+
+            <div class="border-t border-slate-800 pt-3 text-center">
+                <span class="text-[10px] text-slate-400 block mb-2">ترجیح می‌دهید تلفنی نوبت بگیرید؟</span>
+                <button onclick="closeModal('booking-modal'); openModal('contact-modal');" class="w-full bg-slate-950 border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                    <i data-lucide="phone-call" class="w-4 h-4"></i>
+                    تماس مستقیم با مدیریت اتو سرویس
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مدال تماس با ما -->
+    <div id="contact-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="phone" class="w-4 h-4 text-amber-500"></i>
+                    تماس با اتو سرویس کومه
+                </h4>
+                <button onclick="closeModal('contact-modal')" class="text-slate-500 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed text-center">برای مشاوره، استعلام و هماهنگی خدمات می‌توانید مستقیماً با مدیریت تماس بگیرید:</p>
+
+            <div class="space-y-3 pt-2">
+                <a href="tel:09127674705" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-2xl hover:border-amber-500/50 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-xs font-bold text-white">بیژن کومه</span>
+                            <span class="text-[10px] text-slate-400">09127674705</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">تماس</span>
+                </a>
+
+                <a href="tel:09125687215" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-2xl hover:border-amber-500/50 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-xs font-bold text-white">جواد کومه</span>
+                            <span class="text-[10px] text-slate-400">09125687215</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">تماس</span>
+                </a>
+            </div>
+
+            <button onclick="closeModal('contact-modal')" class="w-full bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs hover:bg-slate-700 transition-colors mt-2">انصراف</button>
+        </div>
+    </div>
+
+    <!-- مدال مسیریابی -->
+    <div id="navigation-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-amber-500"></i>
+                    مسیریابی به اتو سرویس کومه
+                </h4>
+                <button onclick="closeModal('navigation-modal')" class="text-slate-500 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed text-center">مسیریاب مورد نظر خود را برای شروع هدایت نقشه انتخاب کنید:</p>
+
+            <div class="grid grid-cols-1 gap-2.5 pt-1">
+                <a href="https://neshan.org/maps/places/35.859093,50.945634" target="_blank" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-2xl hover:border-amber-500/50 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                            <i data-lucide="navigation" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-white">مسیریاب نشان</span>
+                    </div>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500"></i>
+                </a>
+
+                <a href="https://balad.ir/location?latitude=35.859093&longitude=50.945634&zoom=16" target="_blank" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-2xl hover:border-amber-500/50 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                            <i data-lucide="map" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-white">مسیریاب بلد</span>
+                    </div>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500"></i>
+                </a>
+
+                <a href="https://www.google.com/maps/search/?api=1&query=35.859093,50.945634" target="_blank" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-2xl hover:border-amber-500/50 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                            <i data-lucide="globe" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xs font-bold text-white">گوگل مپ (Google Maps)</span>
+                    </div>
+                    <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500"></i>
+                </a>
+            </div>
+
+            <button onclick="closeModal('navigation-modal')" class="w-full bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs hover:bg-slate-700 transition-colors mt-2">انصراف</button>
+        </div>
+    </div>
+
+    <!-- مدال سوئیچ خودرو -->
+    <div id="switch-car-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-3xl max-w-sm w-full space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h4 class="text-xs font-bold text-white flex items-center gap-2">
+                    <i data-lucide="car" class="w-4 h-4 text-amber-500"></i>
+                    انتخاب پرونده خودرو
+                </h4>
+                <button onclick="closeModal('switch-car-modal')" class="text-slate-500 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-[11px] text-slate-400">خودروهایی که با این شماره ثبت شده‌اند:</p>
+            <div id="cars-switch-list" class="space-y-2 max-h-56 overflow-y-auto"></div>
+            <button onclick="closeModal('switch-car-modal')" class="w-full bg-slate-800 text-slate-300 py-2 rounded-xl text-xs">بستن</button>
+        </div>
+    </div>
+
+    <!-- مدال ثبت‌نام -->
+    <!-- مودال تقویم شمسی اختصاصی -->
+    <!-- مودال نظرسنجی رضایت (فقط بعد از سرویس روغن، یک‌بار) -->
+    <div id="survey-modal" class="modal-backdrop hidden">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
+            <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="heart-handshake" class="w-4 h-4 text-amber-500"></i> رضایت شما از کومه</h4>
+                <button onclick="closeModal('survey-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">سرویس اخیر خودروتون چطور بود؟ نظرتون برامون خیلی مهمه 🙏</p>
+
+            <div class="flex justify-center gap-2 py-2" id="survey-stars">
+                <button type="button" onclick="setSurveyRating(1)" class="survey-star text-3xl text-slate-700 transition-colors">★</button>
+                <button type="button" onclick="setSurveyRating(2)" class="survey-star text-3xl text-slate-700 transition-colors">★</button>
+                <button type="button" onclick="setSurveyRating(3)" class="survey-star text-3xl text-slate-700 transition-colors">★</button>
+                <button type="button" onclick="setSurveyRating(4)" class="survey-star text-3xl text-slate-700 transition-colors">★</button>
+                <button type="button" onclick="setSurveyRating(5)" class="survey-star text-3xl text-slate-700 transition-colors">★</button>
+            </div>
+
+            <textarea id="survey-comment" rows="3" placeholder="اگه نکته یا پیشنهادی دارید بنویسید (اختیاری)..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none resize-none"></textarea>
+
+            <div class="flex gap-2 pt-1">
+                <button onclick="closeModal('survey-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition-colors">انصراف</button>
+                <button id="btn-submit-survey" onclick="submitSurvey()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-xl text-xs font-black transition-colors">ارسال نظر</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calendar-modal" class="modal-backdrop hidden">
+        <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-3xl max-w-xs w-full space-y-4">
+            <div class="flex items-center justify-between">
+                <button class="cal-nav-btn" onclick="calChangeMonth(1)"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                <div class="flex flex-col items-center">
+                    <span id="cal-month-label" class="text-sm font-black text-white"></span>
+                    <span id="cal-year-label" class="text-[10px] text-amber-500/70 font-bold"></span>
+                </div>
+                <button class="cal-nav-btn" onclick="calChangeMonth(-1)"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-[9px] text-slate-500 font-bold pb-1 border-b border-slate-800">
+                <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+            </div>
+            <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+            <div class="flex gap-2 pt-1">
+                <button onclick="calGoToday()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-[11px] font-bold transition-colors">امروز</button>
+                <button onclick="closeModal('calendar-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-[11px] font-bold transition-colors">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال انتخابگر ساعت اسکرولی -->
+    <div id="time-modal" class="modal-backdrop hidden">
+        <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-3xl max-w-xs w-full space-y-4">
+            <div class="text-center">
+                <i data-lucide="clock" class="w-5 h-5 text-amber-500 mx-auto mb-1"></i>
+                <h4 class="text-xs font-bold text-white">ساعت پیشنهادی نوبت را انتخاب کنید</h4>
+            </div>
+            <div class="relative">
+                <div class="time-wheel-frame"></div>
+                <div class="time-wheel-fade-top"></div>
+                <div class="time-wheel-fade-bottom"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div id="minute-wheel" class="time-wheel"></div>
+                    <div id="hour-wheel" class="time-wheel"></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 -mt-2">
+                <span class="text-center text-[9px] text-slate-500 font-bold">دقیقه</span>
+                <span class="text-center text-[9px] text-slate-500 font-bold">ساعت</span>
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button onclick="closeModal('time-modal')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-[11px] font-bold transition-colors">انصراف</button>
+                <button onclick="confirmTimePicker()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-xl text-[11px] font-black transition-colors">تایید ساعت</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال ورود با شماره موبایل -->
+    <div id="login-modal" class="modal-backdrop hidden">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
+            <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="log-in" class="w-4 h-4 text-amber-500"></i> ورود به پرونده خودرو</h4>
+                <button onclick="closeModal('login-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl"></div>
+
+            <div id="login-step-1" class="space-y-3">
+                <p class="text-[11px] text-slate-400">لینک پرونده‌تون رو گم کردید؟ شماره موبایلی که باهاش ثبت‌نام کردید رو وارد کنید:</p>
+                <input id="login-phone" type="tel" placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                <button id="btn-send-login-otp" onclick="sendLoginOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">ارسال کد تایید</button>
+            </div>
+
+            <div id="login-step-2" class="hidden space-y-3">
+                <p class="text-[11px] text-slate-400">کد ۶ رقمی ارسال‌شده به <span id="login-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
+                <input id="login-otp" type="text" inputmode="numeric" maxlength="6" placeholder="------" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.5em] text-lg rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none">
+                <button id="btn-verify-login-otp" onclick="verifyLoginOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">تایید و ورود</button>
+                <button onclick="document.getElementById('login-step-1').classList.remove('hidden');document.getElementById('login-step-2').classList.add('hidden');" class="w-full text-slate-500 text-[10px]">بازگشت و اصلاح شماره</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="signup-modal" class="modal-backdrop hidden">
+        <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-amber-500"></i> ثبت‌نام پرونده شخصی</h4>
+                <button onclick="closeModal('signup-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <div id="signup-error" class="hidden bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl"></div>
+
+            <!-- مرحله ۱: اطلاعات پایه -->
+            <div id="signup-step-1" class="space-y-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">نام و نام‌خانوادگی *</label>
+                    <input id="signup-name" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">شماره موبایل *</label>
+                    <input id="signup-phone" type="tel" placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">مدل خودرو *</label>
+                    <input id="signup-car-model" placeholder="مثلاً: پژو 207" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                </div>
+                <button id="btn-send-otp" onclick="sendSignupOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">ارسال کد تایید</button>
+            </div>
+
+            <!-- مرحله ۲: تایید کد -->
+            <div id="signup-step-2" class="hidden space-y-3">
+                <p class="text-[11px] text-slate-400">کد ۶ رقمی ارسال‌شده به <span id="signup-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
+                <input id="signup-otp" type="text" inputmode="numeric" maxlength="6" placeholder="------" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.5em] text-lg rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none">
+                <button id="btn-verify-otp" onclick="verifySignupOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">تایید و ساخت پرونده</button>
+                <button onclick="backToSignupStep1()" class="w-full text-slate-500 text-[10px]">بازگشت و اصلاح شماره</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const SUPABASE_FUNCTIONS_BASE = "https://ujrsgnrrhxzsgjcuzbrj.supabase.co/functions/v1";
+        const GET_CAR_DATA_URL = SUPABASE_FUNCTIONS_BASE + "/get-car-data";
+        const SAVE_PERSONAL_LOG_URL = SUPABASE_FUNCTIONS_BASE + "/save-personal-log";
+        const AI_ASSISTANT_URL = SUPABASE_FUNCTIONS_BASE + "/ai-assistant";
+        const SELF_SIGNUP_URL = SUPABASE_FUNCTIONS_BASE + "/self-signup";
+        const BOOK_APPOINTMENT_URL = SUPABASE_FUNCTIONS_BASE + "/book-appointment";
+        const SUBMIT_SURVEY_URL = SUPABASE_FUNCTIONS_BASE + "/submit-survey";
+        let currentSurveyServiceId = null;
+        let currentSurveyRating = 0;
+
+        function getCarToken() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('t')) return params.get('t');
+            return null;
+        }
+
+        const CAR_TOKEN = getCarToken();
+        let personalLogs = [];
+        let userCars = [];
+        const FORBIDDEN_KEYWORDS = ["روغن موتور", "فیلتر روغن", "فیلتر هوا", "فیلتر کابین", "فیلتر بنزین"];
+
+        function applyForceHidden() {
+            document.querySelectorAll('[data-force-hidden="true"]').forEach(el => { el.style.display = 'none'; });
+        }
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // ============================================================
+        // ۱) تقویم شمسی اختصاصی (بدون کتابخانه خارجی)
+        // ============================================================
+        function toJalali(gy, gm, gd) {
+            var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+            var jy = (gy <= 1600) ? 0 : 979;
+            gy -= (gy <= 1600) ? 621 : 1600;
+            var gy2 = (gm > 2) ? (gy + 1) : gy;
+            var days = (365*gy) + (parseInt((gy2+3)/4)) - parseInt((gy2+99)/100) + parseInt((gy2+399)/400) - 80 + gd + g_d_m[gm-1];
+            jy += 33*parseInt(days/12053); days %= 12053;
+            jy += 4*parseInt(days/1461); days %= 1461;
+            if (days > 365) { jy += parseInt((days-1)/365); days = (days-1)%365; }
+            var jm = (days < 186) ? 1+parseInt(days/31) : 7+parseInt((days-186)/30);
+            var jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
+            return [jy, jm, jd];
+        }
+        function toGregorian(jy, jm, jd) {
+            var gy = (jy <= 979) ? 621 : 1600;
+            jy -= (jy <= 979) ? 0 : 979;
+            var days = (365*jy) + (parseInt(jy/33)*8) + parseInt(((jy%33)+3)/4) + 78 + jd + ((jm < 7) ? (jm-1)*31 : ((jm-7)*30)+186);
+            gy += 400*parseInt(days/146097); days %= 146097;
+            if (days > 36524) { gy += 100*parseInt(--days/36524); days %= 36524; if (days >= 365) days++; }
+            gy += 4*parseInt(days/1461); days %= 1461;
+            if (days > 365) { gy += parseInt((days-1)/365); days = (days-1)%365; }
+            var gd = days + 1;
+            var sal_a = [0,31,((gy%4==0 && gy%100!=0)||(gy%400==0))?29:28,31,30,31,30,31,31,30,31,30,31];
+            var gm;
+            for (gm=0; gm<13; gm++) { var v = sal_a[gm]; if (gd <= v) break; gd -= v; }
+            return [gy, gm, gd];
+        }
+        function jalaliMonthLength(jy, jm) {
+            if (jm <= 6) return 31;
+            if (jm <= 11) return 30;
+            var g = toGregorian(jy, 12, 30);
+            var back = toJalali(g[0], g[1], g[2]);
+            return (back[1] === 12 && back[2] === 30) ? 30 : 29;
+        }
+        const JALALI_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+        const faDigits = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+        let calTargetInput = null, calViewY, calViewM, calSelY = null, calSelM = null, calSelD = null;
+
+        function openCalendar(inputId) {
+            calTargetInput = inputId;
+            const now = new Date();
+            const todayJ = toJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
+            const existing = document.getElementById(inputId).value;
+            if (existing && /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(existing)) {
+                const parts = existing.split('/').map(Number);
+                calSelY = parts[0]; calSelM = parts[1]; calSelD = parts[2];
+                calViewY = calSelY; calViewM = calSelM;
+            } else {
+                calSelY = calSelM = calSelD = null;
+                calViewY = todayJ[0]; calViewM = todayJ[1];
+            }
+            renderCalendar();
+            openModal('calendar-modal');
+        }
+
+        function renderCalendar() {
+            document.getElementById('cal-month-label').innerText = JALALI_MONTHS[calViewM-1];
+            document.getElementById('cal-year-label').innerText = faDigits(calViewY);
+
+            const g = toGregorian(calViewY, calViewM, 1);
+            const jsDate = new Date(g[0], g[1]-1, g[2]);
+            const startOffset = (jsDate.getDay() + 1) % 7; // شنبه = ۰
+            const monthLen = jalaliMonthLength(calViewY, calViewM);
+
+            const now = new Date();
+            const todayJ = toJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
+
+            let html = '';
+            for (let i=0; i<startOffset; i++) html += `<div class="cal-day empty"></div>`;
+            for (let d=1; d<=monthLen; d++) {
+                const isToday = (todayJ[0]===calViewY && todayJ[1]===calViewM && todayJ[2]===d);
+                const isSelected = (calSelY===calViewY && calSelM===calViewM && calSelD===d);
+                html += `<div class="cal-day${isToday?' today':''}${isSelected?' selected':''}" onclick="calPickDay(${d})">${faDigits(d)}</div>`;
+            }
+            document.getElementById('cal-grid').innerHTML = html;
+        }
+
+        function calChangeMonth(dir) {
+            calViewM += dir;
+            if (calViewM > 12) { calViewM = 1; calViewY++; }
+            if (calViewM < 1) { calViewM = 12; calViewY--; }
+            renderCalendar();
+        }
+
+        function calPickDay(d) {
+            calSelY = calViewY; calSelM = calViewM; calSelD = d;
+            const formatted = `${calSelY}/${String(calSelM).padStart(2,'0')}/${String(calSelD).padStart(2,'0')}`;
+            document.getElementById(calTargetInput).value = formatted;
+            closeModal('calendar-modal');
+        }
+
+        function calGoToday() {
+            const now = new Date();
+            const todayJ = toJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
+            calViewY = todayJ[0]; calViewM = todayJ[1];
+            calPickDay(todayJ[2]);
+        }
+
+        // ============================================================
+        // ۲) دراپ‌داون سفارشی وضعیت قطعه
+        // ============================================================
+        function toggleStatusDropdown() {
+            const panel = document.getElementById('status-panel');
+            const chevron = document.getElementById('status-chevron');
+            const isOpen = !panel.classList.contains('hidden');
+            if (isOpen) {
+                panel.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                panel.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        }
+        function selectStatus(el) {
+            const value = el.dataset.value;
+            document.getElementById('personal-status').value = value;
+            document.querySelectorAll('.status-option').forEach(o => o.classList.remove('active'));
+            el.classList.add('active');
+            const dot = el.querySelector('.status-dot').outerHTML;
+            const label = el.querySelector('span:last-child').innerText;
+            document.getElementById('status-trigger-label').innerHTML = dot + label;
+            toggleStatusDropdown();
+        }
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('status-panel');
+            const trigger = document.getElementById('status-trigger');
+            if (panel && !panel.classList.contains('hidden') && !panel.contains(e.target) && !trigger.contains(e.target)) {
+                panel.classList.add('hidden');
+                document.getElementById('status-chevron').style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // ============================================================
+        // ۳) انتخابگر ساعت اسکرولی (Wheel Picker)
+        // ============================================================
+        let selectedHour = 10, selectedMinute = 0;
+        function buildWheel(containerId, items, onSettle) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div style="height:88px"></div>` + items.map(v => `<div class="time-wheel-item">${faDigits(String(v).padStart(2,'0'))}</div>`).join('') + `<div style="height:88px"></div>`;
+            let scrollTimer = null;
+            container.addEventListener('scroll', () => {
+                clearTimeout(scrollTimer);
+                highlightCenter(container);
+                scrollTimer = setTimeout(() => {
+                    const idx = Math.round(container.scrollTop / 44);
+                    container.scrollTo({ top: idx*44, behavior: 'smooth' });
+                    onSettle(items[idx]);
+                    highlightCenter(container);
+                }, 120);
+            });
+        }
+        function highlightCenter(container) {
+            const items = container.querySelectorAll('.time-wheel-item');
+            const centerIdx = Math.round(container.scrollTop / 44);
+            items.forEach((it, i) => it.classList.toggle('active-time', i === centerIdx));
+        }
+        function openTimePicker() {
+            const hours = []; for (let h=8; h<=20; h++) hours.push(h);
+            const minutes = [0,15,30,45];
+            buildWheel('hour-wheel', hours, v => selectedHour = v);
+            buildWheel('minute-wheel', minutes, v => selectedMinute = v);
+            openModal('time-modal');
+            setTimeout(() => {
+                const hourIdx = hours.indexOf(selectedHour); const minIdx = minutes.indexOf(selectedMinute);
+                document.getElementById('hour-wheel').scrollTop = (hourIdx<0?0:hourIdx)*44;
+                document.getElementById('minute-wheel').scrollTop = (minIdx<0?0:minIdx)*44;
+                highlightCenter(document.getElementById('hour-wheel'));
+                highlightCenter(document.getElementById('minute-wheel'));
+            }, 30);
+        }
+        function confirmTimePicker() {
+            const label = `${faDigits(String(selectedHour).padStart(2,'0'))}:${faDigits(String(selectedMinute).padStart(2,'0'))}`;
+            document.getElementById('booking-time-label').innerText = label;
+            document.getElementById('booking-time-label').classList.remove('text-slate-500');
+            document.getElementById('booking-time-label').classList.add('text-amber-400','font-bold');
+            document.getElementById('booking-time').value = `${String(selectedHour).padStart(2,'0')}:${String(selectedMinute).padStart(2,'0')}`;
+            closeModal('time-modal');
+        }
+
+        // ============================================================
+        // نظرسنجی رضایت
+        // ============================================================
+        function setSurveyRating(n) {
+            currentSurveyRating = n;
+            document.querySelectorAll('.survey-star').forEach((star, i) => {
+                star.classList.toggle('active', i < n);
+            });
+        }
+        async function submitSurvey() {
+            if (currentSurveyRating === 0) {
+                alert('لطفاً امتیاز رو با ستاره‌ها مشخص کنید.');
+                return;
+            }
+            const btn = document.getElementById('btn-submit-survey');
+            btn.disabled = true;
+            btn.innerText = 'در حال ارسال...';
+            try {
+                await fetch(SUBMIT_SURVEY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: CAR_TOKEN,
+                        service_id: currentSurveyServiceId,
+                        rating: currentSurveyRating,
+                        comment: document.getElementById('survey-comment').value.trim() || null
+                    })
+                });
+            } catch (err) {}
+            closeModal('survey-modal');
+            btn.disabled = false;
+            btn.innerText = 'ارسال نظر';
+        }
+
+        async function init() {
+            applyForceHidden();
+
+            if (CAR_TOKEN) {
+                const signupBtn = document.getElementById('nav-signup-btn');
+                const loginBtn = document.getElementById('nav-login-btn');
+                if (signupBtn) signupBtn.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'none';
+                await loadCarData();
+            } else {
+                const signupBtn = document.getElementById('nav-signup-btn');
+                if (signupBtn) signupBtn.style.display = 'flex';
+                showPublicVisitorMode();
+            }
+            lucide.createIcons();
+        }
+
+        function showPublicVisitorMode() {
+            document.getElementById('public-visitor-cta').style.display = 'block';
+            document.getElementById('scroll-hint').style.display = 'none';
+
+            document.getElementById('car-model').innerText = 'دفترچه شخصی نگهداری';
+            document.getElementById('current-km').innerText = '—';
+            document.getElementById('next-service-km').innerText = '—';
+            document.getElementById('car-status-text').innerText = 'آماده ثبت سرویس‌های شما';
+            document.getElementById('oil-efficiency-percent').innerText = '—';
+
+            document.getElementById('featured-service-container').innerHTML = `
+                <div class="glass-card rounded-3xl p-6 text-center">
+                    <i data-lucide="book-open" class="w-8 h-8 text-amber-500/60 mx-auto mb-3"></i>
+                    <p class="text-xs text-slate-300 leading-relaxed font-bold">شما در حال استفاده از دفترچه نگهداری شخصی خودرو هستید.</p>
+                    <p class="text-[11px] text-slate-400 mt-2">می‌توانید تعویض قطعات و سرویس‌های خودروی خود را در زبانه «دفترچه شخصی» ثبت کنید.</p>
+                </div>`;
+            document.getElementById('timeline-cards-container').innerHTML = '';
+
+            document.getElementById('personal-history-container').innerHTML = `<p class="text-center text-[11px] text-slate-500 py-6">برای ذخیره دائمی دفترچه، اول ثبت‌نام کنید تا لینک اختصاصی بگیرید.</p>`;
+            lucide.createIcons();
+        }
+
+        async function loadCarData() {
+            try {
+                const res = await fetch(GET_CAR_DATA_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: CAR_TOKEN })
+                });
+                if (!res.ok) throw new Error('not found');
+                const data = await res.json();
+
+                personalLogs = data.personalLogs || [];
+                userCars = data.userCars || [];
+
+                if (userCars.length > 1) {
+                    const switchBtn = document.getElementById('nav-switch-car-btn');
+                    const statSwitchBtn = document.getElementById('stat-switch-btn');
+                    if (switchBtn) switchBtn.style.display = 'flex';
+                    if (statSwitchBtn) statSwitchBtn.style.display = 'block';
+                    renderSwitchCarList(userCars);
+                }
+
+                renderCarInfo(data.car);
+                renderOfficialServices(data.services || []);
+                renderPersonalHistory();
+                lucide.createIcons();
+
+                if (data.showSurvey && data.surveyServiceId) {
+                    currentSurveyServiceId = data.surveyServiceId;
+                    setTimeout(() => openModal('survey-modal'), 900);
+                }
+            } catch (err) {
+                showPublicVisitorMode();
+            }
+        }
+
+        function renderSwitchCarList(cars) {
+            const container = document.getElementById('cars-switch-list');
+            if (!container) return;
+            container.innerHTML = cars.map(c => `
+                <a href="${window.location.origin}${window.location.pathname}?t=${c.token}" class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3 rounded-2xl hover:border-amber-500/50 transition-all ${c.token === CAR_TOKEN ? 'border-amber-500 bg-amber-500/5' : ''}">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="car" class="w-4 h-4 text-amber-500"></i>
+                        <span class="text-xs font-bold text-white">${c.model}</span>
+                    </div>
+                    <span class="text-[10px] text-amber-400 font-bold">${c.token === CAR_TOKEN ? 'پرونده فعال' : 'انتخاب'}</span>
+                </a>
+            `).join('');
+        }
+
+        function switchCarModal() {
+            if (userCars.length > 1) {
+                openModal('switch-car-modal');
+            } else {
+                alert('تنها یک خودرو با این شماره در سیستم ثبت شده است.');
+            }
+        }
+
+        function renderCarInfo(car) {
+            document.getElementById('car-model').innerText = car.model;
+            document.getElementById('current-km').innerText = Number(car.current_km).toLocaleString('fa-IR');
+            document.getElementById('next-service-km').innerText = car.next_service_km ? Number(car.next_service_km).toLocaleString('fa-IR') : '—';
+            document.getElementById('car-status-text').innerText = car.status_text || 'در وضعیت خوب';
+            document.getElementById('oil-efficiency-percent').innerText = (car.oil_health_percent ?? 0) + '٪ سلامت';
+            document.getElementById('oil-efficiency-bar').style.width = (car.oil_health_percent ?? 0) + '%';
+            if (car.hero_image_url) document.getElementById('hero-bg-image').src = car.hero_image_url;
+
+            document.getElementById('booking-car').value = car.model || '';
+            if (car.owner_name) document.getElementById('booking-name').value = car.owner_name;
+            if (car.owner_phone) document.getElementById('booking-phone').value = car.owner_phone;
+        }
+
+        function renderOfficialServices(services) {
+            const featured = services.find(s => s.is_featured);
+            const rest = services.filter(s => !s.is_featured);
+            const featuredBox = document.getElementById('featured-service-container');
+
+            if (featured) {
+                const filtersHtml = (featured.filters || []).map(f => `
+                    <div class="bg-slate-900/90 border border-emerald-500/30 p-2 rounded-xl flex items-center justify-between">
+                        <span class="text-[10px] text-slate-300">${f.name}</span>
+                        <span class="text-[9px] font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> ${f.status || 'تعویض شد'}</span>
+                    </div>`).join('');
+
+                featuredBox.innerHTML = `
+                <div class="glass-card rounded-3xl p-5 border-amber-500/30 relative overflow-hidden shadow-2xl">
+                    <div class="absolute top-0 left-0 w-28 h-28 bg-amber-500/10 rounded-full filter blur-2xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 glow-dot-emerald"></span>
+                            <span class="text-xs font-black text-white">آخرین سرویس ثبت‌شده</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3 h-3"></i> ${featured.service_date}
+                        </span>
+                    </div>
+                    <div class="space-y-3">
+                        ${featured.oil_used ? `
+                        <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800/60">
+                            <div class="flex items-center gap-2 text-slate-300 text-xs"><i data-lucide="droplet" class="w-4 h-4 text-amber-500"></i><span>روغن موتور:</span></div>
+                            <span class="text-xs font-black text-white">${featured.oil_used}</span>
+                        </div>` : ''}
+                        ${filtersHtml ? `
+                        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/80 space-y-2">
+                            <span class="text-[10px] text-slate-400 font-bold block mb-1">وضعیت دقیق فیلترها و مصرفی‌ها:</span>
+                            <div class="grid grid-cols-2 gap-2">${filtersHtml}</div>
+                        </div>` : ''}
+                        ${featured.gearbox_note ? `
+                        <div class="flex items-center justify-between text-xs px-1 pt-1">
+                            <span class="text-slate-400 text-[11px]">گیربکس / واسکازین:</span>
+                            <span class="font-bold text-slate-200">${featured.gearbox_note}</span>
+                        </div>` : ''}
+                        ${featured.reason ? `
+                        <div class="flex items-center justify-between text-xs px-1">
+                            <span class="text-slate-400 text-[11px]">علت مراجعه:</span>
+                            <span class="font-bold text-white">${featured.reason}</span>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            } else {
+                featuredBox.innerHTML = `
+                <div class="glass-card rounded-3xl p-6 text-center">
+                    <i data-lucide="clock" class="w-8 h-8 text-amber-500/60 mx-auto mb-3"></i>
+                    <p class="text-xs text-slate-400">هنوز سرویس رسمی‌ای برای این خودرو ثبت نشده.</p>
+                </div>`;
+            }
+
+            const container = document.getElementById('timeline-cards-container');
+            if (rest.length === 0) {
+                container.innerHTML = '';
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = rest.map((s) => {
+                const partsHtml = (s.parts_done || []).map(p => `
+                    <span class="bg-slate-900 border border-slate-800 text-slate-200 text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1">
+                        <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> ${p.name}
+                    </span>`).join('');
+                const rowId = 'srow-' + s.id;
+                return `
+                <div class="relative timeline-item">
+                    <div class="absolute -right-6 top-3 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    </div>
+                    <div class="glass-card rounded-2xl mr-2 border-slate-800 overflow-hidden">
+                        <button onclick="toggleAccordion('${rowId}')" class="w-full flex items-center justify-between p-3.5 text-right">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-500"></i>
+                                <span class="text-[11px] font-bold text-slate-200">${s.service_date}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black text-white bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">${Number(s.km_at_service).toLocaleString('fa-IR')} KM</span>
+                                <i data-lucide="chevron-down" id="acc-icon-${rowId}" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-300"></i>
+                            </div>
+                        </button>
+                        <div id="${rowId}" class="accordion-content px-3.5">
+                            <div class="pb-3.5 pt-1 border-t border-slate-800/80 space-y-2.5">
+                                <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1">
+                                    <i data-lucide="wrench" class="w-3 h-3"></i> ${s.reason || 'سرویس دوره‌ای'}
+                                </span>
+                                ${s.oil_used ? `<div class="flex items-center justify-between text-[11px]"><span class="text-slate-400">روغن موتور:</span><span class="font-bold text-white">${s.oil_used}</span></div>` : ''}
+                                ${partsHtml ? `<div class="flex flex-wrap gap-1.5">${partsHtml}</div>` : ''}
+                                ${s.gearbox_note ? `<div class="flex items-center justify-between text-[11px]"><span class="text-slate-400">گیربکس:</span><span class="font-bold text-slate-200">${s.gearbox_note}</span></div>` : ''}
+                                ${s.technical_summary ? `<p class="text-[11px] text-slate-300 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 leading-relaxed">${s.technical_summary}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('acc-icon-' + id);
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const btnMain = document.getElementById('nav-btn-main');
+            const btnNotebook = document.getElementById('nav-btn-notebook');
+            if (tabName === 'main') {
+                document.getElementById('tab-main').classList.add('active');
+                btnMain.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors";
+                btnNotebook.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors relative";
+            } else {
+                document.getElementById('tab-notebook').classList.add('active');
+                btnNotebook.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-amber-500 transition-colors relative";
+                btnMain.className = "flex flex-col items-center justify-center py-1.5 px-2.5 text-slate-400 hover:text-amber-400 transition-colors";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function callAI(mode, question) {
+            const res = await fetch(AI_ASSISTANT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: CAR_TOKEN, mode, question })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'خطای ناشناخته');
+            return data.result;
+        }
+
+        async function generateAIReport() {
+            if (!CAR_TOKEN) { alert('برای تحلیل هوشمند، ابتدا باید ثبت‌نام کنید یا از لینک اختصاصی پرونده‌تان وارد شوید.'); return; }
+            const reportBox = document.getElementById("ai-report-box");
+            const reportText = document.getElementById("ai-report-text");
+            const btn = document.getElementById("btn-generate-ai");
+            reportBox.classList.remove("hidden");
+            reportText.innerHTML = `<div class="flex items-center gap-2 text-violet-400"><div class="spinner-ring"></div><span>در حال بررسی و تحلیل هوشمند وضعیت خودرو...</span></div>`;
+            btn.disabled = true;
+            try {
+                const result = await callAI('report');
+                reportText.innerText = result;
+            } catch (err) {
+                reportText.innerText = err.message;
+            }
+            btn.disabled = false;
+        }
+
+        async function askAIOvesta() {
+            if (!CAR_TOKEN) { alert('برای گفتگو با اوستاکار، ابتدا باید ثبت‌نام کنید یا از لینک اختصاصی پرونده‌تان وارد شوید.'); return; }
+            const inputField = document.getElementById("ai-chat-input");
+            const responseBox = document.getElementById("ai-chat-response-box");
+            const responseText = document.getElementById("ai-chat-response");
+            const question = inputField.value.trim();
+            if (!question) return;
+            responseBox.classList.remove("hidden");
+            responseText.innerHTML = `<div class="flex items-center gap-2 text-violet-400"><div class="spinner-ring"></div><span>اوستاکار داره روی سوالت فکر می‌کنه... 🛠️</span></div>`;
+            try {
+                const result = await callAI('chat', question);
+                responseText.innerText = result;
+            } catch (err) {
+                responseText.innerText = err.message;
+            }
+            inputField.value = "";
+        }
+
+        function quickAsk(q) {
+            document.getElementById("ai-chat-input").value = q;
+            askAIOvesta();
+        }
+        function clearChat() {
+            document.getElementById("ai-chat-response-box").classList.add("hidden");
+        }
+
+        async function savePersonalService(e) {
+            e.preventDefault();
+            const errBox = document.getElementById('personal-error-msg');
+            const errText = document.getElementById('personal-error-text');
+            errBox.classList.add('hidden');
+
+            if (!CAR_TOKEN) {
+                errText.innerText = 'برای ذخیره دائمی دفترچه، اول باید ثبت‌نام کنید تا پرونده اختصاصی خودتون رو بگیرید.';
+                errBox.classList.remove('hidden');
+                openSignupModal();
+                return;
+            }
+
+            const partName = document.getElementById('personal-part-name').value.trim();
+            const selectedDate = document.getElementById('personal-date').value.trim();
+
+            if (!partName) { errText.innerText = 'لطفاً نام قطعه یا سرویس را وارد کنید.'; errBox.classList.remove('hidden'); return; }
+            if (!selectedDate) { errText.innerText = 'لطفاً تاریخ را از تقویم انتخاب کنید.'; errBox.classList.remove('hidden'); return; }
+            if (FORBIDDEN_KEYWORDS.some(kw => partName.includes(kw))) {
+                errText.innerText = 'ثبت تعویض روغن و فیلترهای اصلی فقط در بخش سوابق رسمی اتوسرویس کومه ثبت می‌شود.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const payload = {
+                token: CAR_TOKEN,
+                part_category: null,
+                part_name: partName,
+                log_date: selectedDate,
+                km_at_log: document.getElementById('personal-km').value,
+                next_km: document.getElementById('personal-next-km').value,
+                status: document.getElementById('personal-status').value,
+                cost: document.getElementById('personal-cost').value || null,
+                notes: document.getElementById('personal-notes').value.trim() || null
+            };
+
+            const btn = document.getElementById('btn-save-personal');
+            btn.disabled = true;
+            try {
+                const res = await fetch(SAVE_PERSONAL_LOG_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'خطا در ثبت اطلاعات');
+                personalLogs.unshift(data.log);
+                renderPersonalHistory();
+                document.getElementById('personal-service-form').reset();
+            } catch (err) {
+                errText.innerText = err.message;
+                errBox.classList.remove('hidden');
+            }
+            btn.disabled = false;
+        }
+
+        function renderPersonalHistory() {
+            const container = document.getElementById('personal-history-container');
+            document.getElementById('personal-count-badge').innerText = `${personalLogs.length.toLocaleString('fa-IR')} مورد`;
+            if (personalLogs.length === 0) {
+                container.innerHTML = `<p class="text-center text-[11px] text-slate-500 py-6">هنوز موردی در دفترچه شخصی ثبت نکرده‌اید.</p>`;
+                return;
+            }
+            container.innerHTML = personalLogs.map((log, idx) => {
+                const rowId = 'plog-' + (log.id || idx);
+                return `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden">
+                    <button onclick="toggleAccordion('${rowId}')" class="w-full flex items-center justify-between p-3 text-right">
+                        <span class="text-[11px] font-bold text-white truncate">${log.part_name}</span>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-[9px] text-slate-500">${log.log_date}</span>
+                            <span class="text-[9px] text-amber-400 font-bold">${Number(log.km_at_log).toLocaleString('fa-IR')} KM</span>
+                            <i data-lucide="chevron-down" id="acc-icon-${rowId}" class="w-3 h-3 text-slate-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="${rowId}" class="accordion-content px-3">
+                        <div class="pb-3 pt-1 border-t border-slate-800/80 space-y-1.5">
+                            <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                <span>کیلومتر تعویض بعدی:</span>
+                                <span class="text-slate-200 font-bold">${Number(log.next_km).toLocaleString('fa-IR')} KM</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                <span>وضعیت:</span>
+                                <span class="text-slate-200 font-bold">${log.status}</span>
+                            </div>
+                            ${log.cost ? `<div class="flex items-center justify-between text-[10px] text-slate-400"><span>هزینه:</span><span class="text-slate-200 font-bold">${Number(log.cost).toLocaleString('fa-IR')} تومان</span></div>` : ''}
+                            ${log.notes ? `<p class="text-[10px] text-slate-500 pt-1">${log.notes}</p>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openBookingModal() {
+            const msgBox = document.getElementById('booking-msg-box');
+            msgBox.classList.add('hidden');
+            openModal('booking-modal');
+        }
+
+        async function submitBookingForm(e) {
+            e.preventDefault();
+            const msgBox = document.getElementById('booking-msg-box');
+            const btn = document.getElementById('btn-submit-booking');
+
+            if (!document.getElementById('booking-time').value) {
+                msgBox.className = "text-[11px] p-3 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-400 mb-3";
+                msgBox.innerText = 'لطفاً ساعت پیشنهادی را انتخاب کنید.';
+                msgBox.classList.remove('hidden');
+                return;
+            }
+
+            const payload = {
+                car_token: CAR_TOKEN || null,
+                full_name: document.getElementById('booking-name').value.trim(),
+                phone: document.getElementById('booking-phone').value.trim(),
+                car_model: document.getElementById('booking-car').value.trim(),
+                preferred_date: document.getElementById('booking-date').value.trim(),
+                preferred_time: document.getElementById('booking-time').value.trim(),
+                notes: document.getElementById('booking-notes').value.trim() || null
+            };
+
+            btn.disabled = true;
+            btn.innerText = 'در حال ارسال رزرو...';
+
+            try {
+                const res = await fetch(BOOK_APPOINTMENT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'خطا در ثبت رزرو');
+
+                msgBox.className = "text-[11px] p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 mb-3";
+                msgBox.innerText = 'درخواست رزرو نوبت شما با موفقیت ثبت شد و برای مدیریت اتو سرویس کومه ارسال گردید. به‌زودی جهت تایید نوبت با شما تماس خواهیم گرفت.';
+                msgBox.classList.remove('hidden');
+
+                document.getElementById('booking-form').reset();
+                const timeLabel = document.getElementById('booking-time-label');
+                timeLabel.innerText = 'انتخاب ساعت...';
+                timeLabel.className = 'text-slate-500';
+            } catch (err) {
+                msgBox.className = "text-[11px] p-3 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-400 mb-3";
+                msgBox.innerText = err.message || 'مشکلی در ثبت رزرو پیش آمد. لطفاً مستقیماً تماس بگیرید.';
+                msgBox.classList.remove('hidden');
+            }
+
+            btn.disabled = false;
+            btn.innerText = 'ارسال رزرو نوبت به پنل مدیریت';
+        }
+
+        function openLoginModal() {
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('login-step-1').classList.remove('hidden');
+            document.getElementById('login-step-2').classList.add('hidden');
+            document.getElementById('login-phone').value = '';
+            document.getElementById('login-otp').value = '';
+            openModal('login-modal');
+        }
+        function showLoginError(msg) {
+            const box = document.getElementById('login-error');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+        }
+        async function sendLoginOtp() {
+            const phone = document.getElementById('login-phone').value.trim();
+            document.getElementById('login-error').classList.add('hidden');
+            if (!phone) { showLoginError('لطفاً شماره موبایل را وارد کنید.'); return; }
+
+            const btn = document.getElementById('btn-send-login-otp');
+            btn.disabled = true;
+            btn.innerText = 'در حال ارسال...';
+            try {
+                const res = await fetch(SELF_SIGNUP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'send_otp', phone })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد');
+                document.getElementById('login-phone-display').innerText = phone;
+                document.getElementById('login-step-1').classList.add('hidden');
+                document.getElementById('login-step-2').classList.remove('hidden');
+            } catch (err) {
+                showLoginError(err.message);
+            }
+            btn.disabled = false;
+            btn.innerText = 'ارسال کد تایید';
+        }
+        async function verifyLoginOtp() {
+            const phone = document.getElementById('login-phone').value.trim();
+            const code = document.getElementById('login-otp').value.trim();
+            document.getElementById('login-error').classList.add('hidden');
+            if (!code) { showLoginError('کد تایید را وارد کنید.'); return; }
+
+            const btn = document.getElementById('btn-verify-login-otp');
+            btn.disabled = true;
+            btn.innerText = 'در حال بررسی...';
+            try {
+                const res = await fetch(SELF_SIGNUP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'verify_login', phone, code })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست');
+                window.location.href = `${window.location.origin}${window.location.pathname}?t=${data.token}`;
+            } catch (err) {
+                showLoginError(err.message);
+                btn.disabled = false;
+                btn.innerText = 'تایید و ورود';
+            }
+        }
+
+        function openSignupModal() {
+            document.getElementById('signup-error').classList.add('hidden');
+            document.getElementById('signup-step-1').classList.remove('hidden');
+            document.getElementById('signup-step-2').classList.add('hidden');
+            document.getElementById('signup-name').value = '';
+            document.getElementById('signup-phone').value = '';
+            document.getElementById('signup-car-model').value = '';
+            document.getElementById('signup-otp').value = '';
+            openModal('signup-modal');
+        }
+
+        function backToSignupStep1() {
+            document.getElementById('signup-step-1').classList.remove('hidden');
+            document.getElementById('signup-step-2').classList.add('hidden');
+        }
+
+        function showSignupError(msg) {
+            const box = document.getElementById('signup-error');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+        }
+
+        async function sendSignupOtp() {
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const carModel = document.getElementById('signup-car-model').value.trim();
+            document.getElementById('signup-error').classList.add('hidden');
+            if (!name || !phone || !carModel) { showSignupError('لطفاً همه فیلدها را پر کنید.'); return; }
+
+            const btn = document.getElementById('btn-send-otp');
+            btn.disabled = true;
+            btn.innerText = 'در حال ارسال...';
+            try {
+                const res = await fetch(SELF_SIGNUP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'send_otp', phone })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد');
+                document.getElementById('signup-phone-display').innerText = phone;
+                document.getElementById('signup-step-1').classList.add('hidden');
+                document.getElementById('signup-step-2').classList.remove('hidden');
+            } catch (err) {
+                showSignupError(err.message);
+            }
+            btn.disabled = false;
+            btn.innerText = 'ارسال کد تایید';
+        }
+
+        async function verifySignupOtp() {
+            const name = document.getElementById('signup-name').value.trim();
+            const phone = document.getElementById('signup-phone').value.trim();
+            const carModel = document.getElementById('signup-car-model').value.trim();
+            const code = document.getElementById('signup-otp').value.trim();
+            document.getElementById('signup-error').classList.add('hidden');
+            if (!code) { showSignupError('کد تایید را وارد کنید.'); return; }
+
+            const btn = document.getElementById('btn-verify-otp');
+            btn.disabled = true;
+            btn.innerText = 'در حال بررسی...';
+            try {
+                const res = await fetch(SELF_SIGNUP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'verify_and_register', phone, code, full_name: name, car_model: carModel })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست');
+                window.location.href = `${window.location.origin}${window.location.pathname}?t=${data.token}`;
+            } catch (err) {
+                showSignupError(err.message);
+                btn.disabled = false;
+                btn.innerText = 'تایید و ساخت پرونده';
+            }
+        }
+
+        if (window.gsap && window.ScrollTrigger) {
+            gsap.registerPlugin(ScrollTrigger);
+            document.querySelectorAll('#scene-stats, #scene-ai, #scene-history').forEach(section => {
+                gsap.from(section, {
+                    opacity: 0,
+                    y: 60,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: { trigger: section, start: 'top 85%' }
+                });
+            });
+
+            // زوم و بلور نرم پس‌زمینه حین اسکرول — تصویر خودش position:fixed می‌مونه و اصلاً تکون نمی‌خوره،
+            // فقط scale و blur با scrub (تاخیر نرم) عوض می‌شه که لگ/پرش نداشته باشه
+            gsap.to('#hero-bg-image', {
+                scale: 1.22,
+                filter: 'blur(7px)',
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: document.body,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 0.8
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
 
