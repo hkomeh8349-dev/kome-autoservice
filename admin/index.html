@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -42,6 +43,11 @@
     .ac-list.show { display:block; }
     .ac-item { padding:9px 12px; font-size:11px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05); }
     .ac-item:hover { background: rgba(245,158,11,0.08); }
+    .chip { padding:7px 12px; border-radius:10px; font-size:10.5px; font-weight:700; cursor:pointer; border:1px solid #1e293b; background:#0f172a; color:#94a3b8; transition:all .15s; white-space:nowrap; }
+    .chip.sel { background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.5); color:#fbbf24; }
+    .chip-row { display:flex; flex-wrap:wrap; gap:6px; }
+    .filter-row { background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:10px 12px; }
+    .filter-row.done { border-color:rgba(16,185,129,0.35); background:rgba(16,185,129,0.05); }
 </style>
 </head>
 <body class="text-slate-100 antialiased selection:bg-amber-500/30">
@@ -116,8 +122,35 @@
                 </div>
             </div>
 
-            <button onclick="openCustomerModal()" class="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
-                <i data-lucide="user-plus" class="w-4 h-4"></i> ثبت مشتری و خودرو جدید
+            <!-- KPI مالی و عملکردی -->
+            <div class="glass-card rounded-2xl p-4">
+                <h3 class="text-xs font-bold text-slate-200 mb-3 flex items-center gap-1.5"><i data-lucide="trending-up" class="w-3.5 h-3.5 text-amber-500"></i> KPI این ماه</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[9px] text-slate-500 mb-1">درآمد خالص</div>
+                        <div id="kpi-revenue" class="text-sm font-black text-emerald-400">—</div>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[9px] text-slate-500 mb-1">میانگین فاکتور</div>
+                        <div id="kpi-avg-invoice" class="text-sm font-black text-white">—</div>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[9px] text-slate-500 mb-1">مشتری جدید</div>
+                        <div id="kpi-new-customers" class="text-sm font-black text-white">—</div>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[9px] text-slate-500 mb-1 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-2.5 h-2.5 text-amber-500"></i> کم‌موجودی</div>
+                        <div id="kpi-low-stock" class="text-sm font-black text-amber-400">—</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-[9px] text-slate-500 mb-1.5">پرمصرف‌ترین برند روغن این ماه</div>
+                    <div id="kpi-top-oils" class="space-y-1.5"></div>
+                </div>
+            </div>
+
+            <button onclick="openQuickServiceModal()" class="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+                <i data-lucide="wrench" class="w-4 h-4"></i> ثبت سرویس مشتری
             </button>
 
             <div class="glass-card rounded-2xl p-4">
@@ -214,6 +247,94 @@
 </div>
 
 <!-- ==================== مودال: جزئیات خودرو + ثبت سرویس + ارسال لینک ==================== -->
+<!-- ==================== مودال: ثبت سرویس مشتری (سریع) ==================== -->
+<div id="quick-service-modal" class="modal-backdrop hidden">
+    <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-md w-full space-y-3.5 max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i> ثبت سرویس مشتری</h4>
+            <button onclick="closeModal('quick-service-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+
+        <div class="relative">
+            <label class="block text-[10px] text-slate-400 mb-1">شماره موبایل مشتری *</label>
+            <input id="qs-phone" oninput="searchQuickServiceCustomer()" placeholder="شماره را تایپ کنید تا مشتری پیدا شود..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            <div id="qs-ac-list" class="ac-list"></div>
+            <div id="qs-found-tag" class="hidden mt-1.5 text-[10px] text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> <span id="qs-found-text"></span></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-[10px] text-slate-400 mb-1">تاریخ سرویس</label><input id="qs-date" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-amber-400 font-bold focus:border-amber-500 focus:outline-none"></div>
+            <div><label class="block text-[10px] text-slate-400 mb-1">کیلومتر فعلی *</label><input id="qs-km" type="number" oninput="qsAutoNextKm()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+        </div>
+        <div>
+            <label class="block text-[10px] text-slate-400 mb-1">کیلومتر سرویس بعدی (روغن)</label>
+            <input id="qs-next-km" type="number" class="w-full bg-slate-950 border border-amber-500/40 text-xs rounded-xl p-2.5 text-white font-bold focus:border-amber-400 focus:outline-none">
+        </div>
+
+        <div>
+            <label class="block text-[10px] text-slate-400 mb-1">علت مراجعه</label>
+            <div id="qs-reason-chips" class="chip-row"></div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3">
+            <label class="block text-[10px] text-amber-400 font-bold mb-1.5 flex items-center gap-1"><i data-lucide="droplet" class="w-3.5 h-3.5"></i> نوع روغن مصرفی</label>
+            <div id="qs-oil-chips" class="chip-row"></div>
+            <input type="hidden" id="qs-oil-product-id">
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+            <label class="block text-[10px] text-amber-400 font-bold flex items-center gap-1"><i data-lucide="filter" class="w-3.5 h-3.5"></i> فیلترهای تعویض‌شده</label>
+            <div class="filter-row" id="filter-row-oil">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5"><input type="checkbox" class="filter-toggle accent-amber-500" data-filter="oil" onchange="toggleFilterRow('oil')"> فیلتر روغن</label>
+                </div>
+                <select class="filter-brand-select w-full bg-slate-950 border border-slate-800 text-[11px] rounded-lg p-2 text-slate-200 focus:border-amber-500 focus:outline-none hidden" data-filter="oil"></select>
+            </div>
+            <div class="filter-row" id="filter-row-air">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5"><input type="checkbox" class="filter-toggle accent-amber-500" data-filter="air" onchange="toggleFilterRow('air')"> فیلتر هوا</label>
+                </div>
+                <select class="filter-brand-select w-full bg-slate-950 border border-slate-800 text-[11px] rounded-lg p-2 text-slate-200 focus:border-amber-500 focus:outline-none hidden" data-filter="air"></select>
+            </div>
+            <div class="filter-row" id="filter-row-cabin">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5"><input type="checkbox" class="filter-toggle accent-amber-500" data-filter="cabin" onchange="toggleFilterRow('cabin')"> فیلتر کابین</label>
+                </div>
+                <select class="filter-brand-select w-full bg-slate-950 border border-slate-800 text-[11px] rounded-lg p-2 text-slate-200 focus:border-amber-500 focus:outline-none hidden" data-filter="cabin"></select>
+            </div>
+            <div class="filter-row" id="filter-row-fuel">
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5"><input type="checkbox" class="filter-toggle accent-amber-500" data-filter="fuel" onchange="toggleFilterRow('fuel')"> فیلتر بنزین</label>
+                </div>
+                <select class="filter-brand-select w-full bg-slate-950 border border-slate-800 text-[11px] rounded-lg p-2 text-slate-200 focus:border-amber-500 focus:outline-none hidden" data-filter="fuel"></select>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3">
+            <label class="block text-[10px] text-slate-400 mb-1.5">وضعیت روغن (قبل از تعویض)</label>
+            <div id="qs-oilstatus-chips" class="chip-row"></div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3">
+            <label class="block text-[10px] text-slate-400 mb-1.5">واسکازین / گیربکس</label>
+            <div id="qs-gearbox-chips" class="chip-row"></div>
+            <div id="qs-gearbox-next-box" class="hidden mt-2">
+                <label class="block text-[10px] text-amber-400 mb-1">کیلومتر تعویض بعدی واسکازین *</label>
+                <input id="qs-gearbox-next-km" type="number" class="w-full bg-slate-950 border border-amber-500/40 text-xs rounded-xl p-2.5 text-white font-bold focus:border-amber-400 focus:outline-none">
+            </div>
+        </div>
+
+        <div><label class="block text-[10px] text-slate-400 mb-1">جمع‌بندی فنی (اختیاری)</label><textarea id="qs-notes" rows="2" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></textarea></div>
+
+        <div class="border-t border-slate-800 pt-3 grid grid-cols-2 gap-2">
+            <div><label class="block text-[10px] text-slate-400 mb-1">جمع فاکتور (تومان)</label><input id="qs-total" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+            <div><label class="block text-[10px] text-slate-400 mb-1">تخفیف (تومان)</label><input id="qs-discount" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+        </div>
+
+        <button id="btn-save-quick-service" onclick="saveQuickService()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs mt-1">ثبت سرویس</button>
+    </div>
+</div>
+
 <div id="car-detail-modal" class="modal-backdrop hidden">
     <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-md w-full space-y-4 max-h-[92vh] overflow-y-auto">
         <div class="flex items-center justify-between">
@@ -268,11 +389,19 @@
             <button onclick="closeModal('product-modal')" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
         <div><label class="block text-[10px] text-slate-400 mb-1">دسته‌بندی</label>
-            <select id="prd-category" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+            <select id="prd-category" onchange="onProductCategoryChange()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
                 <option value="روغن">روغن</option><option value="فیلتر">فیلتر</option><option value="گیربکس">گیربکس</option><option value="سایر">سایر</option>
             </select>
         </div>
-        <div><label class="block text-[10px] text-slate-400 mb-1">نام محصول *</label><input id="prd-name" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+        <div><label class="block text-[10px] text-slate-400 mb-1">برند *</label><input id="prd-brand" placeholder="مثلاً: کسترول، Mann..." class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+        <div><label class="block text-[10px] text-slate-400 mb-1">نام محصول *</label><input id="prd-name" placeholder="مثلاً: روغن موتور مگناتک" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+
+        <div id="prd-oil-fields" class="grid grid-cols-2 gap-2">
+            <div><label class="block text-[10px] text-slate-400 mb-1">SAE</label><input id="prd-sae" placeholder="مثلاً: 5W-30" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+            <div><label class="block text-[10px] text-slate-400 mb-1">API</label><input id="prd-api" placeholder="مثلاً: SN" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
+        </div>
+        <p id="prd-api-note" class="text-[9px] text-slate-500 -mt-1.5">این دو مورد فقط داخلی‌ان؛ SAE تو پرونده مشتری دیده می‌شه ولی API نمایش داده نمی‌شه.</p>
+
         <div class="grid grid-cols-2 gap-2">
             <div><label class="block text-[10px] text-slate-400 mb-1">قیمت خرید *</label><input id="prd-buy" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
             <div><label class="block text-[10px] text-slate-400 mb-1">قیمت فروش *</label><input id="prd-sell" type="number" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"></div>
@@ -459,10 +588,46 @@ function renderDashboard(){
     document.getElementById('stat-bookings').innerText = faNum(allBookings.filter(b=>b.status==='در انتظار تایید').length);
 
     const now = new Date(); const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-    sb('official_services', {query:`?select=*,cars(model)&order=created_at.desc&limit=100`}).then(services => {
+
+    // مشتری جدید این ماه
+    const newCustomersCount = allCustomers.filter(c => c.created_at && c.created_at.startsWith(thisMonth)).length;
+    document.getElementById('kpi-new-customers').innerText = faNum(newCustomersCount);
+
+    // محصولات کم‌موجود (زیر ۵ عدد)
+    const lowStockCount = allProducts.filter(p => p.stock < 5).length;
+    document.getElementById('kpi-low-stock').innerText = faNum(lowStockCount);
+
+    sb('official_services', {query:`?select=*,cars(model)&order=created_at.desc&limit=200`}).then(services => {
         if(!services) return;
-        const monthCount = services.filter(s => s.created_at && s.created_at.startsWith(thisMonth)).length;
-        document.getElementById('stat-services').innerText = faNum(monthCount);
+        const monthServices = services.filter(s => s.created_at && s.created_at.startsWith(thisMonth));
+        document.getElementById('stat-services').innerText = faNum(monthServices.length);
+
+        // درآمد خالص و میانگین فاکتور این ماه
+        let revenue = 0, invoiceCount = 0;
+        monthServices.forEach(s => {
+            if(s.final_amount){
+                revenue += (s.final_amount - (s.discount_amount||0));
+                invoiceCount++;
+            }
+        });
+        document.getElementById('kpi-revenue').innerText = revenue > 0 ? faNum(revenue.toLocaleString('en-US')) + ' ت' : '—';
+        document.getElementById('kpi-avg-invoice').innerText = invoiceCount > 0 ? faNum(Math.round(revenue/invoiceCount).toLocaleString('en-US')) + ' ت' : '—';
+
+        // پرمصرف‌ترین برند روغن این ماه
+        const oilCounts = {};
+        monthServices.forEach(s => { if(s.oil_used){ oilCounts[s.oil_used] = (oilCounts[s.oil_used]||0)+1; } });
+        const sortedOils = Object.entries(oilCounts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+        const maxCount = sortedOils.length ? sortedOils[0][1] : 1;
+        const oilBox = document.getElementById('kpi-top-oils');
+        if(sortedOils.length===0){ oilBox.innerHTML = '<span class="text-[10px] text-slate-600">هنوز سرویس روغنی این ماه ثبت نشده</span>'; }
+        else {
+            oilBox.innerHTML = sortedOils.map(([name,count]) => `
+                <div>
+                    <div class="flex items-center justify-between text-[10px] mb-0.5"><span class="text-slate-300">${name}</span><span class="text-amber-400 font-bold">${faNum(count)}</span></div>
+                    <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full" style="width:${(count/maxCount)*100}%"></div></div>
+                </div>`).join('');
+        }
+
         const recent = services.slice(0,5);
         const box = document.getElementById('dashboard-recent');
         if(recent.length===0){ box.innerHTML = 'هنوز سرویسی ثبت نشده.'; return; }
@@ -568,6 +733,196 @@ function renderAlerts(){
     container.innerHTML = allAlerts.map(a => `
         <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-300">${a.message}</div>
     `).join('');
+}
+
+// ------------------------------------------------------------
+// ثبت سرویس مشتری (فرم سریع داشبورد)
+// ------------------------------------------------------------
+const REASON_OPTIONS = ['تعویض روغن','سرویس دوره‌ای','تعمیر','بازدید فنی','نویز/صدا','ترمز'];
+const OILSTATUS_OPTIONS = ['نرمال','سیاه و کارکرده','رقیق شده','کف‌آلود'];
+const GEARBOX_OPTIONS = ['تعویض شد','بررسی شد - نیاز به تعویض نداشت','بررسی نشد'];
+let qsSelectedCarId = null, qsSearchTimer = null;
+let qsSelectedReason = null, qsSelectedOilStatus = null, qsSelectedGearbox = null;
+
+function faToday(){
+    const d = new Date();
+    const g2j = (gy, gm, gd) => {
+        const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+        let jy = (gy <= 1600) ? 0 : 979;
+        gy -= (gy <= 1600) ? 621 : 1600;
+        const gy2 = (gm > 2) ? (gy + 1) : gy;
+        let days = (365*gy) + (parseInt((gy2+3)/4)) - parseInt((gy2+99)/100) + parseInt((gy2+399)/400) - 80 + gd + g_d_m[gm-1];
+        jy += 33*parseInt(days/12053); days %= 12053;
+        jy += 4*parseInt(days/1461); days %= 1461;
+        if (days > 365) { jy += parseInt((days-1)/365); days = (days-1)%365; }
+        const jm = (days < 186) ? 1+parseInt(days/31) : 7+parseInt((days-186)/30);
+        const jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
+        return [jy, jm, jd];
+    };
+    const [jy, jm, jd] = g2j(d.getFullYear(), d.getMonth()+1, d.getDate());
+    return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`;
+}
+
+function renderChipRow(containerId, options, onSelect){
+    const box = document.getElementById(containerId);
+    box.innerHTML = options.map(opt => `<div class="chip" data-val="${opt}" onclick="qsChipClick('${containerId}', this)">${opt}</div>`).join('');
+}
+function qsChipClick(containerId, el){
+    document.querySelectorAll(`#${containerId} .chip`).forEach(c => c.classList.remove('sel'));
+    el.classList.add('sel');
+    const val = el.dataset.val;
+    if(containerId === 'qs-reason-chips') qsSelectedReason = val;
+    if(containerId === 'qs-oilstatus-chips') qsSelectedOilStatus = val;
+    if(containerId === 'qs-gearbox-chips'){
+        qsSelectedGearbox = val;
+        document.getElementById('qs-gearbox-next-box').classList.toggle('hidden', val !== 'تعویض شد');
+    }
+}
+function qsOilChipClick(el){
+    document.querySelectorAll('#qs-oil-chips .chip').forEach(c => c.classList.remove('sel'));
+    el.classList.add('sel');
+    document.getElementById('qs-oil-product-id').value = el.dataset.id;
+}
+function populateOilChips(){
+    const oils = allProducts.filter(p => p.category === 'روغن');
+    const box = document.getElementById('qs-oil-chips');
+    if(oils.length === 0){ box.innerHTML = `<span class="text-[10px] text-slate-500">هنوز محصول روغنی ثبت نشده — از تب محصولات اضافه کن.</span>`; return; }
+    box.innerHTML = oils.map(o => `<div class="chip" data-id="${o.id}" onclick="qsOilChipClick(this)">${o.brand} ${o.spec||''}</div>`).join('');
+}
+function populateFilterSelects(){
+    const filters = allProducts.filter(p => p.category === 'فیلتر');
+    document.querySelectorAll('.filter-brand-select').forEach(sel => {
+        sel.innerHTML = '<option value="">-- انتخاب برند --</option>' + filters.map(f => `<option value="${f.id}" data-brand="${f.brand}">${f.brand} — ${f.name}</option>`).join('');
+    });
+}
+function toggleFilterRow(key){
+    const checkbox = document.querySelector(`.filter-toggle[data-filter="${key}"]`);
+    const select = document.querySelector(`.filter-brand-select[data-filter="${key}"]`);
+    const row = document.getElementById('filter-row-' + key);
+    select.classList.toggle('hidden', !checkbox.checked);
+    row.classList.toggle('done', checkbox.checked);
+}
+function qsAutoNextKm(){
+    const km = parseInt(document.getElementById('qs-km').value) || 0;
+    if(km > 0) document.getElementById('qs-next-km').value = km + 5000;
+}
+
+function openQuickServiceModal(){
+    document.getElementById('qs-phone').value = '';
+    document.getElementById('qs-km').value = '';
+    document.getElementById('qs-next-km').value = '';
+    document.getElementById('qs-notes').value = '';
+    document.getElementById('qs-total').value = '';
+    document.getElementById('qs-discount').value = '';
+    document.getElementById('qs-gearbox-next-km').value = '';
+    document.getElementById('qs-found-tag').classList.add('hidden');
+    document.getElementById('qs-gearbox-next-box').classList.add('hidden');
+    document.getElementById('qs-date').value = faToday();
+    qsSelectedCarId = null; qsSelectedReason = null; qsSelectedOilStatus = null; qsSelectedGearbox = null;
+    document.getElementById('qs-oil-product-id').value = '';
+    document.querySelectorAll('.filter-toggle').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.filter-brand-select').forEach(s => { s.classList.add('hidden'); s.value=''; });
+    document.querySelectorAll('.filter-row').forEach(r => r.classList.remove('done'));
+
+    renderChipRow('qs-reason-chips', REASON_OPTIONS);
+    renderChipRow('qs-oilstatus-chips', OILSTATUS_OPTIONS);
+    renderChipRow('qs-gearbox-chips', GEARBOX_OPTIONS);
+    populateOilChips();
+    populateFilterSelects();
+    openModal('quick-service-modal');
+}
+
+function searchQuickServiceCustomer(){
+    clearTimeout(qsSearchTimer);
+    const val = document.getElementById('qs-phone').value.trim();
+    const list = document.getElementById('qs-ac-list');
+    qsSelectedCarId = null;
+    document.getElementById('qs-found-tag').classList.add('hidden');
+    if(val.length < 3){ list.classList.remove('show'); return; }
+    qsSearchTimer = setTimeout(()=>{
+        const matches = allCars.filter(c => (c.customer?.phone||'').includes(val));
+        if(matches.length === 0){ list.classList.remove('show'); return; }
+        list.innerHTML = matches.map(c => `<div class="ac-item" onclick='selectQuickServiceCustomer("${c.id}")'>${c.customer.phone} — ${c.model} (${faNum(c.current_km)} KM)</div>`).join('');
+        list.classList.add('show');
+    }, 250);
+}
+function selectQuickServiceCustomer(carId){
+    const car = allCars.find(c => c.id === carId);
+    if(!car) return;
+    qsSelectedCarId = carId;
+    document.getElementById('qs-phone').value = car.customer.phone;
+    document.getElementById('qs-km').value = car.current_km;
+    qsAutoNextKm();
+    document.getElementById('qs-ac-list').classList.remove('show');
+    document.getElementById('qs-found-tag').classList.remove('hidden');
+    document.getElementById('qs-found-text').innerText = `${car.customer.full_name} — ${car.model}`;
+}
+
+async function saveQuickService(){
+    if(!qsSelectedCarId){ showToast('⚠️ اول مشتری را از لیست پیشنهادی انتخاب کن', 'error'); return; }
+    const km = parseInt(document.getElementById('qs-km').value) || 0;
+    if(!km){ showToast('⚠️ کیلومتر فعلی را وارد کن', 'error'); return; }
+    const nextKm = parseInt(document.getElementById('qs-next-km').value) || (km + 5000);
+
+    if(qsSelectedGearbox === 'تعویض شد' && !document.getElementById('qs-gearbox-next-km').value){
+        showToast('⚠️ کیلومتر تعویض بعدی واسکازین را وارد کن', 'error'); return;
+    }
+
+    const oilProductId = document.getElementById('qs-oil-product-id').value;
+    const oilProduct = oilProductId ? allProducts.find(p => p.id === oilProductId) : null;
+
+    const filters = [];
+    document.querySelectorAll('.filter-toggle:checked').forEach(cb => {
+        const key = cb.dataset.filter;
+        const select = document.querySelector(`.filter-brand-select[data-filter="${key}"]`);
+        const brandOpt = select.selectedOptions[0];
+        const label = {oil:'فیلتر روغن', air:'فیلتر هوا', cabin:'فیلتر کابین', fuel:'فیلتر بنزین'}[key];
+        filters.push({ name: label, status: 'تعویض شد', brand: brandOpt ? brandOpt.dataset.brand : null });
+    });
+
+    let gearboxNote = qsSelectedGearbox || null;
+    if(qsSelectedGearbox === 'تعویض شد'){
+        gearboxNote += ' (بعدی: ' + document.getElementById('qs-gearbox-next-km').value + ' KM)';
+    }
+
+    const btn = document.getElementById('btn-save-quick-service');
+    btn.disabled = true;
+
+    const isOil = !!oilProduct;
+    if(isOil) await sb('official_services', {method:'PATCH', query:`?car_id=eq.${qsSelectedCarId}`, body:{is_featured:false}});
+
+    const total = parseInt(document.getElementById('qs-total').value) || null;
+    const discount = parseInt(document.getElementById('qs-discount').value) || null;
+
+    const inserted = await sb('official_services', {method:'POST', body:{
+        car_id: qsSelectedCarId,
+        service_date: document.getElementById('qs-date').value,
+        km_at_service: km,
+        reason: qsSelectedReason,
+        oil_used: oilProduct ? `${oilProduct.brand} ${oilProduct.spec||''}`.trim() : null,
+        oil_sae: oilProduct ? (oilProduct.spec||null) : null,
+        oil_api_class: oilProduct ? (oilProduct.api_class||null) : null,
+        oil_status: qsSelectedOilStatus,
+        gearbox_note: gearboxNote,
+        filters,
+        parts_done: [],
+        technical_summary: document.getElementById('qs-notes').value.trim() || null,
+        final_amount: total,
+        discount_amount: discount,
+        is_featured: true,
+        created_by: currentAdmin.id
+    }});
+    if(!inserted){ btn.disabled = false; return; }
+
+    await sb('cars', {method:'PATCH', query:`?id=eq.${qsSelectedCarId}`, body:{ current_km: km, next_service_km: nextKm }});
+
+    try { await callFunction('check-and-notify', { car_id: qsSelectedCarId, km_at_service: km, is_oil: isOil }, true); }
+    catch(e) { console.error('check-and-notify failed', e); }
+
+    showToast('✅ سرویس با موفقیت ثبت شد');
+    closeModal('quick-service-modal');
+    loadAllData();
+    btn.disabled = false;
 }
 
 // ------------------------------------------------------------
@@ -698,17 +1053,29 @@ async function sendCarLinkSms(){
 // محصولات
 // ------------------------------------------------------------
 function openProductModal(){
-    ['prd-name','prd-buy','prd-sell','prd-stock'].forEach(id=>document.getElementById(id).value='');
+    ['prd-name','prd-brand','prd-buy','prd-sell','prd-stock','prd-sae','prd-api'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('prd-category').value = 'روغن';
+    onProductCategoryChange();
     openModal('product-modal');
+}
+function onProductCategoryChange(){
+    const isOil = document.getElementById('prd-category').value === 'روغن';
+    document.getElementById('prd-oil-fields').style.display = isOil ? 'grid' : 'none';
+    document.getElementById('prd-api-note').style.display = isOil ? 'block' : 'none';
 }
 async function saveProduct(){
     const category = document.getElementById('prd-category').value;
+    const brand = document.getElementById('prd-brand').value.trim();
     const name = document.getElementById('prd-name').value.trim();
     const buy = parseInt(document.getElementById('prd-buy').value) || 0;
     const sell = parseInt(document.getElementById('prd-sell').value) || 0;
     const stock = parseInt(document.getElementById('prd-stock').value) || 0;
-    if(!name || !buy || !sell){ showToast('⚠️ فیلدهای الزامی را پر کنید', 'error'); return; }
-    const inserted = await sb('products', {method:'POST', body:{category, name, buy_price:buy, sell_price:sell, stock, created_by: currentAdmin.id}});
+    const sae = document.getElementById('prd-sae').value.trim();
+    const api = document.getElementById('prd-api').value.trim();
+    if(!name || !brand || !buy || !sell){ showToast('⚠️ فیلدهای الزامی را پر کنید', 'error'); return; }
+    const body = {category, brand, name, buy_price:buy, sell_price:sell, stock, created_by: currentAdmin.id};
+    if(category === 'روغن'){ body.spec = sae || null; body.api_class = api || null; }
+    const inserted = await sb('products', {method:'POST', body});
     if(!inserted) return;
     showToast('✅ محصول ثبت شد');
     closeModal('product-modal');
