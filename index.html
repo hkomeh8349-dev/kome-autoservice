@@ -30,7 +30,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
-
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
@@ -160,44 +159,38 @@
         .survey-star.active { color: #f59e0b !important; text-shadow: 0 0 12px rgba(245,158,11,0.6); transform: scale(1.15); }
         .survey-star { cursor: pointer; }
     </style>
-
-    <style>
-        /* حذف استایل قدیمی تقویم جی‌کوئری که دیگر استفاده نمی‌شود */
-    </style>
 </head>
 <body class="text-slate-100 antialiased selection:bg-amber-500/30 pb-28">
 
-    <!-- منوی بالایی -->
-    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/85 backdrop-blur-md border-b border-white/5 py-3.5 px-6">
-        <div class="max-w-5xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-full flex items-center justify-center border border-amber-500/30 shadow-inner">
-                    <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xs font-black tracking-wider text-white">اتو سرویس کومه</span>
-                    <span class="text-[8px] text-amber-500/70 tracking-widest font-bold">SMART CAR CARE</span>
-                </div>
-            </div>
-
+    <!-- منوی بالایی (نوار هدر اصلاح‌شده) -->
+    <nav class="fixed top-0 inset-x-0 z-50 bg-[#030508]/85 backdrop-blur-md border-b border-white/5 py-2.5 px-4">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <!-- سمت راست: دکمه‌های ورود، ثبت‌نام و سوئیچ خودرو -->
             <div class="flex items-center gap-2">
-                <!-- دکمه ورود با شماره (برای مشتریانی که لینکشون رو گم کردن) -->
-                <button id="nav-login-btn" onclick="openLoginModal()" class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                <!-- دکمه ورود با شماره -->
+                <button id="nav-login-btn" onclick="openLoginModal()" class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-md active:scale-95">
                     <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
                     <span>ورود</span>
                 </button>
 
                 <!-- دکمه ثبت‌نام -->
-                <button id="nav-signup-btn" onclick="openSignupModal()" class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                <button id="nav-signup-btn" onclick="openSignupModal()" class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-md active:scale-95">
                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
                     <span>ثبت‌نام</span>
                 </button>
 
                 <!-- دکمه سوئیچ خودرو -->
-                <button id="nav-switch-car-btn" onclick="switchCarModal()" data-force-hidden="true" class="flex items-center gap-1.5 bg-slate-900 border border-amber-500/30 text-amber-400 hover:text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-md active:scale-95">
+                <button id="nav-switch-car-btn" onclick="switchCarModal()" data-force-hidden="true" class="flex items-center gap-1.5 bg-slate-900 border border-amber-500/30 text-amber-400 hover:text-white px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-md active:scale-95">
                     <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
                     <span>سوئیچ خودرو</span>
                 </button>
+            </div>
+
+            <!-- سمت چپ: لوگوی گرافیکی KOME -->
+            <div class="flex items-center">
+                <img src="kome-logo.png" 
+                     alt="لوگو اتوسرویس کومه" 
+                     class="h-8 w-auto object-contain select-none drop-shadow-[0_2px_8px_rgba(245,158,11,0.25)]">
             </div>
         </div>
     </nav>
@@ -585,7 +578,7 @@
         </div>
     </div>
 
-    <!-- مدال کامل رزرو نوبت آنلاین + ارسال مستقیم به پنل ادمین -->
+    <!-- مدال کامل رزرو نوبت آنلاین -->
     <div id="booking-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -771,9 +764,7 @@
         </div>
     </div>
 
-    <!-- مدال ثبت‌نام -->
-    <!-- مودال تقویم شمسی اختصاصی -->
-    <!-- مودال نظرسنجی رضایت (فقط بعد از سرویس روغن، یک‌بار) -->
+    <!-- مودال نظرسنجی رضایت -->
     <div id="survey-modal" class="modal-backdrop hidden">
         <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
             <div class="flex items-center justify-between">
@@ -799,6 +790,7 @@
         </div>
     </div>
 
+    <!-- مودال تقویم شمسی اختصاصی -->
     <div id="calendar-modal" class="modal-backdrop hidden">
         <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-3xl max-w-xs w-full space-y-4">
             <div class="flex items-center justify-between">
@@ -847,7 +839,7 @@
         </div>
     </div>
 
-    <!-- مودال ورود با شماره موبایل -->
+    <!-- ==================== مودال ورود با شماره موبایل (کد ۴ رقمی) ==================== -->
     <div id="login-modal" class="modal-backdrop hidden">
         <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4">
             <div class="flex items-center justify-between">
@@ -856,21 +848,24 @@
             </div>
             <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/40 text-rose-400 text-[11px] p-3 rounded-xl"></div>
 
+            <!-- مرحله ۱: شماره موبایل -->
             <div id="login-step-1" class="space-y-3">
                 <p class="text-[11px] text-slate-400">لینک پرونده‌تون رو گم کردید؟ شماره موبایلی که باهاش ثبت‌نام کردید رو وارد کنید:</p>
                 <input id="login-phone" type="tel" placeholder="09123456789" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
                 <button id="btn-send-login-otp" onclick="sendLoginOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">ارسال کد تایید</button>
             </div>
 
+            <!-- مرحله ۲: وارد کردن کد ۴ رقمی پیامک شده -->
             <div id="login-step-2" class="hidden space-y-3">
-                <p class="text-[11px] text-slate-400">کد ۶ رقمی ارسال‌شده به <span id="login-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
-                <input id="login-otp" type="text" inputmode="numeric" maxlength="6" placeholder="------" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.5em] text-lg rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none">
-                <button id="btn-verify-login-otp" onclick="verifyLoginOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">تایید و ورود</button>
+                <p class="text-[11px] text-slate-400">کد ۴ رقمی پیامک‌شده به شماره <span id="login-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
+                <input id="login-otp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="----" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.8em] text-2xl font-black rounded-xl p-3 text-white focus:border-amber-400 focus:outline-none">
+                <button id="btn-verify-login-otp" onclick="verifyLoginOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">تایید و ورود به سیستم</button>
                 <button onclick="document.getElementById('login-step-1').classList.remove('hidden');document.getElementById('login-step-2').classList.add('hidden');" class="w-full text-slate-500 text-[10px]">بازگشت و اصلاح شماره</button>
             </div>
         </div>
     </div>
 
+    <!-- ==================== مودال ثبت‌نام پرونده شخصی (کد ۴ رقمی) ==================== -->
     <div id="signup-modal" class="modal-backdrop hidden">
         <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-3xl max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between">
@@ -884,7 +879,7 @@
             <div id="signup-step-1" class="space-y-3">
                 <div>
                     <label class="block text-[10px] text-slate-400 mb-1">نام و نام‌خانوادگی *</label>
-                    <input id="signup-name" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
+                    <input id="signup-name" placeholder="مثلاً: رضا شریفی" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-400 mb-1">شماره موبایل *</label>
@@ -894,13 +889,13 @@
                     <label class="block text-[10px] text-slate-400 mb-1">مدل خودرو *</label>
                     <input id="signup-car-model" placeholder="مثلاً: پژو 207" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl p-2.5 text-slate-100 focus:border-amber-500 focus:outline-none">
                 </div>
-                <button id="btn-send-otp" onclick="sendSignupOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">ارسال کد تایید</button>
+                <button id="btn-send-otp" onclick="sendSignupOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">ارسال کد تایید پیامکی</button>
             </div>
 
-            <!-- مرحله ۲: تایید کد -->
+            <!-- مرحله ۲: تایید کد ۴ رقمی پیامک شده -->
             <div id="signup-step-2" class="hidden space-y-3">
-                <p class="text-[11px] text-slate-400">کد ۶ رقمی ارسال‌شده به <span id="signup-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
-                <input id="signup-otp" type="text" inputmode="numeric" maxlength="6" placeholder="------" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.5em] text-lg rounded-xl p-2.5 text-white focus:border-amber-400 focus:outline-none">
+                <p class="text-[11px] text-slate-400">کد ۴ رقمی پیامک‌شده به شماره <span id="signup-phone-display" class="text-amber-400 font-bold"></span> را وارد کنید:</p>
+                <input id="signup-otp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="----" class="w-full bg-slate-950 border border-amber-500/40 text-center tracking-[0.8em] text-2xl font-black rounded-xl p-3 text-white focus:border-amber-400 focus:outline-none">
                 <button id="btn-verify-otp" onclick="verifySignupOtp()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs">تایید و ساخت پرونده</button>
                 <button onclick="backToSignupStep1()" class="w-full text-slate-500 text-[10px]">بازگشت و اصلاح شماره</button>
             </div>
@@ -946,7 +941,7 @@
         }
 
         // ============================================================
-        // ۱) تقویم شمسی اختصاصی (بدون کتابخانه خارجی)
+        // ۱) تقویم شمسی اختصاصی
         // ============================================================
         function toJalali(gy, gm, gd) {
             var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -968,7 +963,7 @@
             gy += 400*parseInt(days/146097); days %= 146097;
             if (days > 36524) { gy += 100*parseInt(--days/36524); days %= 36524; if (days >= 365) days++; }
             gy += 4*parseInt(days/1461); days %= 1461;
-            if (days > 365) { gy += parseInt((days-1)/365); days = (days-1)%365; }
+            if (days > 365) { jy += parseInt((days-1)/365); days = (days-1)%365; }
             var gd = days + 1;
             var sal_a = [0,31,((gy%4==0 && gy%100!=0)||(gy%400==0))?29:28,31,30,31,30,31,31,30,31,30,31];
             var gm;
@@ -1010,7 +1005,7 @@
 
             const g = toGregorian(calViewY, calViewM, 1);
             const jsDate = new Date(g[0], g[1]-1, g[2]);
-            const startOffset = (jsDate.getDay() + 1) % 7; // شنبه = ۰
+            const startOffset = (jsDate.getDay() + 1) % 7;
             const monthLen = jalaliMonthLength(calViewY, calViewM);
 
             const now = new Date();
@@ -1048,7 +1043,7 @@
         }
 
         // ============================================================
-        // ۲) دراپ‌داون سفارشی وضعیت قطعه
+        // ۲) دراپ‌داون وضعیت قطعه
         // ============================================================
         function toggleStatusDropdown() {
             const panel = document.getElementById('status-panel');
@@ -1082,7 +1077,7 @@
         });
 
         // ============================================================
-        // ۳) انتخابگر ساعت اسکرولی (Wheel Picker)
+        // ۳) انتخابگر ساعت اسکرولی
         // ============================================================
         let selectedHour = 10, selectedMinute = 0;
         function buildWheel(containerId, items, onSettle) {
@@ -1605,6 +1600,9 @@
             btn.innerText = 'ارسال رزرو نوبت به پنل مدیریت';
         }
 
+        // ============================================================
+        // لاگین و احراز هویت پیامکی (کد ۴ رقمی)
+        // ============================================================
         function openLoginModal() {
             document.getElementById('login-error').classList.add('hidden');
             document.getElementById('login-step-1').classList.remove('hidden');
@@ -1613,40 +1611,51 @@
             document.getElementById('login-otp').value = '';
             openModal('login-modal');
         }
+
         function showLoginError(msg) {
             const box = document.getElementById('login-error');
             box.innerText = msg;
             box.classList.remove('hidden');
         }
+
         async function sendLoginOtp() {
             const phone = document.getElementById('login-phone').value.trim();
             document.getElementById('login-error').classList.add('hidden');
-            if (!phone) { showLoginError('لطفاً شماره موبایل را وارد کنید.'); return; }
+            if (!phone || phone.length < 10) { showLoginError('لطفاً شماره موبایل ۱۱ رقمی معتبر را وارد کنید.'); return; }
 
             const btn = document.getElementById('btn-send-login-otp');
             btn.disabled = true;
-            btn.innerText = 'در حال ارسال...';
+            btn.innerText = 'در حال ارسال کد...';
             try {
                 const res = await fetch(SELF_SIGNUP_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'send_otp', phone })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد');
+                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد تایید');
+                
                 document.getElementById('login-phone-display').innerText = phone;
                 document.getElementById('login-step-1').classList.add('hidden');
                 document.getElementById('login-step-2').classList.remove('hidden');
+                const otpInput = document.getElementById('login-otp');
+                otpInput.value = '';
+                otpInput.focus();
             } catch (err) {
                 showLoginError(err.message);
             }
             btn.disabled = false;
             btn.innerText = 'ارسال کد تایید';
         }
+
         async function verifyLoginOtp() {
             const phone = document.getElementById('login-phone').value.trim();
             const code = document.getElementById('login-otp').value.trim();
             document.getElementById('login-error').classList.add('hidden');
-            if (!code) { showLoginError('کد تایید را وارد کنید.'); return; }
+            
+            if (!code || code.length !== 4) { 
+                showLoginError('لطفاً کد تایید ۴ رقمی ارسال‌شده را به صورت کامل وارد کنید.'); 
+                return; 
+            }
 
             const btn = document.getElementById('btn-verify-login-otp');
             btn.disabled = true;
@@ -1657,15 +1666,18 @@
                     body: JSON.stringify({ action: 'verify_login', phone, code })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست');
+                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست یا منقضی شده است.');
                 window.location.href = `${window.location.origin}${window.location.pathname}?t=${data.token}`;
             } catch (err) {
                 showLoginError(err.message);
                 btn.disabled = false;
-                btn.innerText = 'تایید و ورود';
+                btn.innerText = 'تایید و ورود به سیستم';
             }
         }
 
+        // ============================================================
+        // ثبت‌نام و احراز هویت پیامکی (کد ۴ رقمی)
+        // ============================================================
         function openSignupModal() {
             document.getElementById('signup-error').classList.add('hidden');
             document.getElementById('signup-step-1').classList.remove('hidden');
@@ -1693,26 +1705,31 @@
             const phone = document.getElementById('signup-phone').value.trim();
             const carModel = document.getElementById('signup-car-model').value.trim();
             document.getElementById('signup-error').classList.add('hidden');
-            if (!name || !phone || !carModel) { showSignupError('لطفاً همه فیلدها را پر کنید.'); return; }
+            if (!name || !phone || !carModel) { showSignupError('لطفاً همه فیلدهای ستاره‌دار را تکمیل کنید.'); return; }
+            if (phone.length < 10) { showSignupError('لطفاً شماره موبایل معتبر وارد کنید.'); return; }
 
             const btn = document.getElementById('btn-send-otp');
             btn.disabled = true;
-            btn.innerText = 'در حال ارسال...';
+            btn.innerText = 'در حال ارسال کد...';
             try {
                 const res = await fetch(SELF_SIGNUP_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'send_otp', phone })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد');
+                if (!res.ok) throw new Error(data.error || 'خطا در ارسال کد تایید');
+                
                 document.getElementById('signup-phone-display').innerText = phone;
                 document.getElementById('signup-step-1').classList.add('hidden');
                 document.getElementById('signup-step-2').classList.remove('hidden');
+                const otpInput = document.getElementById('signup-otp');
+                otpInput.value = '';
+                otpInput.focus();
             } catch (err) {
                 showSignupError(err.message);
             }
             btn.disabled = false;
-            btn.innerText = 'ارسال کد تایید';
+            btn.innerText = 'ارسال کد تایید پیامکی';
         }
 
         async function verifySignupOtp() {
@@ -1721,18 +1738,22 @@
             const carModel = document.getElementById('signup-car-model').value.trim();
             const code = document.getElementById('signup-otp').value.trim();
             document.getElementById('signup-error').classList.add('hidden');
-            if (!code) { showSignupError('کد تایید را وارد کنید.'); return; }
+            
+            if (!code || code.length !== 4) { 
+                showSignupError('لطفاً کد تایید ۴ رقمی ارسال‌شده را وارد کنید.'); 
+                return; 
+            }
 
             const btn = document.getElementById('btn-verify-otp');
             btn.disabled = true;
-            btn.innerText = 'در حال بررسی...';
+            btn.innerText = 'در حال ساخت پرونده...';
             try {
                 const res = await fetch(SELF_SIGNUP_URL, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'verify_and_register', phone, code, full_name: name, car_model: carModel })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست');
+                if (!res.ok) throw new Error(data.error || 'کد وارد شده صحیح نیست یا زمان آن به پایان رسیده است.');
                 window.location.href = `${window.location.origin}${window.location.pathname}?t=${data.token}`;
             } catch (err) {
                 showSignupError(err.message);
@@ -1740,6 +1761,16 @@
                 btn.innerText = 'تایید و ساخت پرونده';
             }
         }
+
+        // محدودسازی فیلدهای OTP فقط به اعداد
+        ['login-otp', 'signup-otp'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            }
+        });
 
         if (window.gsap && window.ScrollTrigger) {
             gsap.registerPlugin(ScrollTrigger);
@@ -1753,8 +1784,6 @@
                 });
             });
 
-            // زوم و بلور نرم پس‌زمینه حین اسکرول — تصویر خودش position:fixed می‌مونه و اصلاً تکون نمی‌خوره،
-            // فقط scale و blur با scrub (تاخیر نرم) عوض می‌شه که لگ/پرش نداشته باشه
             gsap.to('#hero-bg-image', {
                 scale: 1.22,
                 filter: 'blur(7px)',
@@ -1772,4 +1801,3 @@
     </script>
 </body>
 </html>
-
