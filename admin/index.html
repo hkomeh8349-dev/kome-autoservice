@@ -1572,6 +1572,53 @@ function copyCarLink(){
     showToast('لینک پرونده کپی شد ✓');
 }
 
+async function sendCarLinkSms() {
+    const car = allCars.find(c => c.id === activeCarId);
+    if (!car || !car.customer?.phone) {
+        showToast('شماره موبایل مشتری برای این خودرو ثبت نشده است.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-send-sms');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> در حال ارسال...';
+    }
+
+    try {
+        const response = await fetch("https://ujrsgnrrhxzsgjcuzbrj.supabase.co/functions/v1/send-sms", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phone: car.customer.phone,
+                bodyId: "523973",
+                text: `${car.customer.full_name || 'مشتری گرامی'};https://komeauto.ir/car/${car.tracking_token || ''}`,
+                type: 'invoice_link'
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && (result.RetStatus === 1 || result.Value > 100)) {
+            showToast('✅ پیامک لینک فاکتور با موفقیت ارسال شد.');
+        } else {
+            console.error('SMS Error:', result);
+            showToast('❌ خطا در ارسال: ' + (result.StrRetStatus || 'خطای پنل پیامک'));
+        }
+    } catch (error) {
+        console.error('Network Error:', error);
+        showToast('❌ خطا در ارتباط با سرور پیامک.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+}
+
 async function sendCarLinkSms(){
     const car = allCars.find(c => c.id === activeCarId);
     if(!car || !car.customer?.phone) return;
